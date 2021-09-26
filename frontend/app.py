@@ -16,13 +16,12 @@ def my_form_post():
     payload["Owner"] = request.form['owner']
     payload["Repo"] = request.form['repo']
 
-    response = ''
     try:
-        response = requests.post('http://middle-flask-container:5001/middle', data=payload)
+        response = requests.post('http://middle-flask-container:5001/middle', data = payload)
     except requests.exceptions.RequestException as e:
         return 'Cannot reach Server\n'
 
-    return str(payload) + "Entry Successfully Sent"
+    return str(payload) + "<br>Entry Successfully Sent" + response.text
 
 
 if __name__ == "__main__":
