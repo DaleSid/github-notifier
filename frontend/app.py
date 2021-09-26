@@ -18,7 +18,7 @@ def client_side():
         print('\n Cannot reach the pong service.')
         return 'Cannot reach\n'
 
-    return 'Success!'+response + '\n'
+    return response.text
 
 if __name__ == "__main__":
     app.run(host ='0.0.0.0', port = 5000, debug = True)
