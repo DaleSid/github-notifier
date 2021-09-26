@@ -9,6 +9,7 @@ def ping_server():
 
 def main():
     print("Hello World!")
+    print("Dale")
 
 if __name__ == "__main__":
     main()
