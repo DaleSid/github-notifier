@@ -1,24 +1,29 @@
-from flask import Flask
-app = Flask(__name__)
-
+from flask import Flask, request, render_template
 import requests
 
-@app.route('/')
-def check():
-    return 'Hello, I am client end!'
+app = Flask(__name__)
 
-@app.route('/client')
-def client_side():
-    ping = 'Client'
+
+@app.route('/')
+def form_center():
+    return render_template('form.html')
+
+
+@app.route('/', methods=['POST'])
+def my_form_post():
+    payload = dict()
+    payload["UserName"] = request.form['username']
+    payload["Owner"] = request.form['owner']
+    payload["Repo"] = request.form['repo']
 
     response = ''
     try:
-        response = requests.get('http://middle-flask-container:5001/middle')
+        response = requests.post('http://middle-flask-container:5001/middle', data=payload)
     except requests.exceptions.RequestException as e:
-        print('\n Cannot reach the pong service.')
-        return 'Cannot reach\n'
+        return 'Cannot reach Server\n'
 
-    return response.text
+    return str(payload) + "Entry Successfully Sent"
+
 
 if __name__ == "__main__":
-    app.run(host ='0.0.0.0', port = 5000, debug = True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
