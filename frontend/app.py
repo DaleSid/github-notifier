@@ -1,15 +1,24 @@
-from flask import Flask, jsonify
-import pymongo
-
+from flask import Flask
 app = Flask(__name__)
 
-@app.route("/")
-def ping_server():
-    return "Hello World"
+import requests
 
-def main():
-    print("Hello World!")
+@app.route('/')
+def check():
+    return 'Hello, I am client end!'
+
+@app.route('/client')
+def client_side():
+    ping = 'Client'
+
+    response = ''
+    try:
+        response = requests.get('http://middle-flask-container:5001/middle')
+    except requests.exceptions.RequestException as e:
+        print('\n Cannot reach the pong service.')
+        return 'Cannot reach\n'
+
+    return 'Success!'+response + '\n'
 
 if __name__ == "__main__":
-    main()
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host ='0.0.0.0', port = 5000, debug = True)
