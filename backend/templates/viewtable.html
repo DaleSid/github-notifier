@@ -1,14 +1,26 @@
 <!DOCTYPE html>
 <html>
 <body>
-
+<style>
+    table, th, td {
+        border:1px solid black;
+    }
+</style>
 <h2>Git Daily Notifications</h2>
 
-{% for item in items %}
-    <h3> item.username </h3>
-    <h3> item.owner </h3>
-    <h3> item.repo </h3>
-{% endfor %}
-
+<table style="width:100%">
+    <tr>
+      <th>User Name</th>
+      <th>Owner</th>
+      <th>Repository</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+        <td> {{ item.username }} </td>
+        <td> {{ item.owner }} </td>
+        <td> {{ item.repo }} </td>
+    </tr>
+    {% endfor %}
+</table>
 </body>
 </html>

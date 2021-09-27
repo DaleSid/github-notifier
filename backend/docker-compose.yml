@@ -4,7 +4,7 @@ services:
     build: .
     command: python -u app.py
     ports: 
-      - "5000:5001"
+      - "5001:5001"
     volumes:
       - .:/backend
     links:
@@ -17,7 +17,6 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=pass
     volumes:
-      - ./init-db.js:/docker-entrypoint-initdb.d/init-db.js:ro
       - ./mongo-volume:/data/db
     ports:
       - 27017:27017

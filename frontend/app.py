@@ -17,7 +17,7 @@ def my_form_post():
     payload["Repo"] = request.form['repo']
 
     try:
-        response = requests.post('http://middle-flask-container:5001/middle', data = payload)
+        response = requests.post('http://backend_middle_1:5001/middle', data = payload)
     except requests.exceptions.RequestException as e:
         return 'Cannot reach Server\n'
 
