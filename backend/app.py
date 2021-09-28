@@ -7,11 +7,12 @@ import json
 app = Flask(__name__)
 
 client = MongoClient(host='backend_db',
-                        port=27017, 
-                        username='root', 
-                        password='pass',
-                    authSource="admin")
+                     port=27017,
+                     username='root',
+                     password='pass',
+                     authSource="admin")
 db = client["subscribers_db"]
+
 
 @app.route('/')
 def check1():
@@ -32,13 +33,14 @@ def middle_check():
     print("Checkpoint reached!\n")
 
     return "<br>" + username + " requested access to " + repo + " repo from " + owner
-    
+
+
 @app.route('/viewtable')
 def view_table():
     _items = db.subscribers_db.find()
     items = [item for item in _items]
 
-    return render_template('viewtable.html', items = items)
+    return render_template('viewtable.html', items=items)
 
 
 if __name__ == '__main__':
