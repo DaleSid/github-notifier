@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, url_for, redirect, config
 from flask_caching import Cache
 import requests
+import json
 
 config = {
     "DEBUG": True,  # some Flask specific configs
@@ -14,6 +15,7 @@ cache = Cache(app)
 
 cache.add("gLatest_message", "")
 cache.add("gUser_name", "")
+cache.add("gSubscriptions", [])
 
 
 @app.route('/')
@@ -24,9 +26,20 @@ def login_form(message_text=""):
 @app.route('/subscriptions')
 def subscribe_form(message_text=""):
     if cache.get("gUser_name") == "":
-        login_form()
+        cache.set("gLatest_message", "Please login first")
+        return redirect(url_for('login_form'))
     return render_template('subscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"))
 
+@app.route('/unsubscribe')
+def unsubscribe_form(message_text=""):
+    if cache.get("gUser_name") == "":
+        cache.set("gLatest_message", "Please login first")
+        return redirect(url_for('login_form'))
+    subscriptions = cache.get("gSubscriptions")
+    if not subscriptions:
+        subscriptions = []
+        
+    return render_template('unsubscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"), subscriptions=subscriptions)
 
 @app.route('/', methods=['POST'])
 def login_form_post():
@@ -40,12 +53,14 @@ def login_form_post():
         cache.set("gLatest_message", "Login Failed! Try again!")
         return redirect(url_for('login_form'))
 
-    cache.set("gLatest_message", response.text)
+    response_json = json.loads(response.text)
+    cache.set("gLatest_message", response_json['Message'])
+    cache.set("gSubscriptions", response_json['Subscriptions'])
     return redirect(url_for('subscribe_form'))
 
 
 @app.route('/subscriptions', methods=['POST'])
-def my_form_post():
+def subscription_form_post():
     payload = dict()
     payload["UserName"] = cache.get("gUser_name")
     payload["Owner"] = request.form['owner']
@@ -58,8 +73,27 @@ def my_form_post():
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('subscribe_form'))
 
-    cache.set("gLatest_message", response.text)
+    response_json = json.loads(response.text)
+    cache.set("gLatest_message", response_json['Message'])
+    cache.set("gSubscriptions", response_json['Subscriptions'])
     return redirect(url_for('subscribe_form'))
+
+@app.route('/unsubscribe', methods=['POST'])
+def unsubscribe_form_post():
+    payload = dict()
+    payload["UserName"] = cache.get("gUser_name")
+    payload["Repo"] = request.form['repo']
+
+    try:
+        response = requests.post('http://backend_middle_1:5001/unsubscribe', data=payload)
+    except requests.exceptions.RequestException as e:
+        cache.set("gLatest_message", "Cannot reach Server")
+        return redirect(url_for('unsubscribe_form'))
+
+    response_json = json.loads(response.text)
+    cache.set("gLatest_message", response_json['Message'])
+    cache.set("gSubscriptions", response_json['Subscriptions'])
+    return redirect(url_for('unsubscribe_form'))
 
 
 if __name__ == "__main__":

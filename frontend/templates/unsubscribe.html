@@ -69,26 +69,22 @@
 </style>
 <body>
 
-<h2>Git Daily Notifications: Subscriptions</h2>
+<h2>Git Daily Notifications: Unsubscribe</h2>
 <h4>Latest Message: {{ message }}</h4>
-<div class="navbar"> 
+<div class="navbar">
     <a href="{{ url_for('login_form') }}"><i class="fa fa-fw fa-user"></i> {{ user_name }}</a>
-    <a class="active" href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
-    <a href="{{ url_for('unsubscribe_form') }}"><i class="fa fa-fw fa-search-minus"></i> Unsubscribe</a> 
+    <a href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
+    <a class="active" href="{{ url_for('unsubscribe_form') }}"><i class="fa fa-fw fa-search-minus"></i> Unsubscribe</a> 
 </div>
 <div>
     <form method="POST">
-        <label for="publisher">Choose a provider:</label><br>
-        <select id="publisher" name="publisher">
-            <option value="github">GitHub</option>
-            <option value="bitbucket">BitBucket</option>
-            <option value="gitlab">GitLab</option>
+        <label for="repo">Choose a Repo:</label>
+        <select id="repo" name="repo" size="6">
+            {% for subscription in subscriptions %}
+                <option value={{ subscription.repo }}>{{ subscription.publisher }}, {{ subscription.owner }}, {{ subscription.repo }}</option>
+            {% endfor %}
         </select><br>
-        <label for="owner">Owner name:</label><br>
-        <input type="text" name="owner"><br>
-        <label for="repo">Repo name:</label><br>
-        <input type="text" name="repo"><br>
-        <input type="submit" value="Subscribe">
+        <input type="submit" value="Unsubscribe">
     </form>
 </div>
 </body>

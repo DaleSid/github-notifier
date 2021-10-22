@@ -14,6 +14,14 @@ client = MongoClient(host='backend_db',
 db = client["subscribers_db"]
 topics = client["topics_db"]
 
+def get_return_dict(username: str, message: str = ""):
+    query = {"username": username}
+    doc = db.subscribers_db.find(query)
+
+    return { 
+        "Message": message,
+        "Subscriptions": doc[0]['subscriptions']
+    }
 
 @app.route('/')
 def check1():
@@ -42,7 +50,7 @@ def login_request():
         }
         db.subscribers_db.insert_one(item_doc)
 
-    return username + " logged in successfully"
+    return get_return_dict(username=username, message=username + " logged in successfully")
 
 
 def update_topics(publisher, owner, repo):
@@ -94,8 +102,23 @@ def subscription_request():
 
     update_topics(publisher, owner, repo)
 
-    return username + " requested access to " + repo + " repo from " + owner
+    return get_return_dict(username=username, message=username + " requested access to " + repo + " repo from " + owner)
 
+@app.route('/unsubscribe', methods=['POST'])
+def unsubscribe_request():
+    username = request.form["UserName"]
+    repo = request.form["Repo"]
+    query = {"username": username}
+    doc = db.subscribers_db.find(query)
+    if doc.count():
+        deleteValue = {
+            "$pull": {
+                'subscriptions': { 'repo': repo}
+            }
+        }
+        db.subscribers_db.update_one(query, deleteValue)
+
+    return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
 
 @app.route('/viewtable')
 def view_table():
