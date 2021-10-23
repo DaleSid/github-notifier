@@ -67,6 +67,12 @@
         }
     }
 
+    #notifications {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
     #notifications td, #customers th {
         border: 1px solid #ddd;
         padding: 8px;
@@ -114,30 +120,39 @@
 </style>
 <body>
 
-<h2>Git Daily Notifications: Subscriptions</h2>
+<h2>Git Daily Notifications: Notifications</h2>
 <h4>Latest Message: {{ message }}</h4>
-<div class="navbar"> 
+<div class="navbar">
     <a href="{{ url_for('login_form') }}"><i class="fa fa-fw fa-user"></i> {{ user_name }}</a>
-    <a class="active" href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
+    <a href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
     <a href="{{ url_for('unsubscribe_form') }}"><i class="fa fa-fw fa-search-minus"></i> Unsubscribe</a> 
-    <a class="notification" href="{{ url_for('notification_table') }}"><i class="fa fa-fw fa-bell"></i> Notifications
+    <a class="active notification" href="{{ url_for('notification_table') }}"><i class="fa fa-fw fa-bell"></i> Notifications
         <span class="badge">{{notifications|length}}</span>
     </a>
 </div>
 <div>
-    <form method="POST">
-        <label for="publisher">Choose a provider:</label><br>
-        <select id="publisher" name="publisher">
-        {% for publisher in publishers %}
-            <option value="{{ publisher }}">{{ publisher }}</option>
+    <table id="notifications">
+        <tr>
+          <th>Publisher</th>
+          <th>Owner</th>
+          <th>Repo</th>
+          <th>Commit ID</th>
+          <th>Time</th>
+          <th>Committer</th>
+          <th>Message</th>
+        </tr>
+        {% for notification in notifications %}
+        <tr>
+          <td>{{ notification.publisher }}</td>
+          <td>{{ notification.owner }}</td>
+          <td>{{ notification.repo }}</td>
+          <td>{{ notification.commitid }}</td>
+          <td>{{ notification.time }}</td>
+          <td>{{ notification.committer }}</td>
+          <td>{{ notification.message }}</td>
+        </tr>
         {% endfor %}
-        </select><br>
-        <label for="owner">Owner name:</label><br>
-        <input type="text" name="owner"><br>
-        <label for="repo">Repo name:</label><br>
-        <input type="text" name="repo"><br>
-        <input type="submit" value="Subscribe">
-    </form>
+    </table>
 </div>
 </body>
 </html>

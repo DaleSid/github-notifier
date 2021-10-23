@@ -20,7 +20,8 @@ def get_return_dict(username: str, message: str = ""):
 
     return { 
         "Message": message,
-        "Subscriptions": doc[0]['subscriptions']
+        "Subscriptions": doc[0]['subscriptions'],
+        "Publishers": ["GitHub", "BitBucket", "GitLab"]
     }
 
 @app.route('/')
@@ -57,6 +58,7 @@ def update_topics(publisher, owner, repo):
     query = {"publisher": publisher, "owner": owner, "repo": repo}
     doc = db.topics_db.find(query)
     if doc.count() == 0:
+        query["last_update"] = "2000-01-01T00:00:00Z"
         db.topics_db.insert_one(query)
 
 
@@ -113,7 +115,9 @@ def unsubscribe_request():
     if doc.count():
         deleteValue = {
             "$pull": {
-                'subscriptions': { 'repo': repo}
+                'subscriptions': { 
+                    'repo': repo 
+                }
             }
         }
         db.subscribers_db.update_one(query, deleteValue)

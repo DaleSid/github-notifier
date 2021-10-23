@@ -66,6 +66,51 @@
             display: block;
         }
     }
+
+    #notifications td, #customers th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    #notifications tr:nth-child(even){
+        background-color: #f2f2f2;
+    }
+
+    #notifications tr:hover {
+        background-color: #ddd;
+    }
+
+    #notifications th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04AA6D;
+        color: white;
+    }
+
+    .notification {
+        background-color: #555;
+        color: white;
+        text-decoration: none;
+        padding: 15px 26px;
+        position: relative;
+        display: inline-block;
+        border-radius: 2px;
+    }
+
+    .notification:hover {
+        background: red;
+    }
+
+    .notification .badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        padding: 5px 10px;
+        border-radius: 50%;
+        background-color: red;
+        color: white;
+    }
 </style>
 <body>
 
@@ -75,6 +120,9 @@
     <a href="{{ url_for('login_form') }}"><i class="fa fa-fw fa-user"></i> {{ user_name }}</a>
     <a href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
     <a class="active" href="{{ url_for('unsubscribe_form') }}"><i class="fa fa-fw fa-search-minus"></i> Unsubscribe</a> 
+    <a class="notification" href="{{ url_for('notification_table') }}"><i class="fa fa-fw fa-bell"></i> Notifications
+        <span class="badge">{{notifications|length}}</span>
+    </a>
 </div>
 <div>
     <form method="POST">
