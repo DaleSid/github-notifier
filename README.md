@@ -19,7 +19,7 @@ The purpose of this document is to provide the reader with an understanding of t
 Please find below the steps to be followed to obtain a successful implementation of Phase 1 of the project
 
 1) In Terminal, navigate to frontend folder and run to create the frontend docker image
-- `docker build -t frontend-image .`
+- `docker build -t frontend-image .` 
   
 2) Use the image to create the front end container
 - `docker run --name frontend-container -p 5000:5000 frontend-image`

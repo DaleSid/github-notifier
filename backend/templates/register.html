@@ -67,12 +67,6 @@
         }
     }
 
-    #notifications {
-        font-family: Arial, Helvetica, sans-serif;
-        border-collapse: collapse;
-        width: 100%;
-    }
-
     #notifications td, #customers th {
         border: 1px solid #ddd;
         padding: 8px;
@@ -120,46 +114,21 @@
 </style>
 <body>
 
-<h2>Git Daily Notifications: Notifications</h2>
+<h2>Broker: Git Daily Notifications: Register Publisher</h2>
 <h4>Latest Message: {{ message }}</h4>
-<marquee behavior="scroll" direction="left" scrollamount="12">
-    {% for advertisement in advertisements %}
-    <b>Publisher:</b> {{ advertisement.publisher }}
-    <b>Owner:</b> {{ advertisement.owner }}
-    <b>Repo:</b> {{ advertisement.repo }} <b>IS OUT NOW! Go and Subscribe! </b><br>
-    {% endfor %}
-</marquee>
 <div class="navbar">
-    <a href="{{ url_for('login_form') }}"><i class="fa fa-fw fa-user"></i> {{ user_name }}</a>
-    <a href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
-    <a href="{{ url_for('unsubscribe_form') }}"><i class="fa fa-fw fa-search-minus"></i> Unsubscribe</a> 
-    <a class="active notification" href="{{ url_for('notification_table') }}"><i class="fa fa-fw fa-bell"></i> Notifications
-        <span class="badge">{{ new_notifications }}</span>
-    </a>
+    <a class="active" href="{{ url_for('register_form') }}"><i class="fa fa-fw fa-search-plus"></i> Register</a>
+    <a href="{{ url_for('advertise_form') }}"><i class="fa fa-fw fa-comment-o"></i> Advertise</a>
+    <a href="{{ url_for('deadvertise_form') }}"><i class="fa fa-fw fa-ban"></i> Deadvertise</a>
 </div>
 <div>
-    <table id="notifications">
-        <tr>
-          <th>Publisher</th>
-          <th>Owner</th>
-          <th>Repo</th>
-          <th>Commit ID</th>
-          <th>Time</th>
-          <th>Committer</th>
-          <th>Message</th>
-        </tr>
-        {% for notification in notifications %}
-        <tr>
-          <td>{{ notification.publisher }}</td>
-          <td>{{ notification.repo_owner }}</td>
-          <td>{{ notification.repo }}</td>
-          <td>{{ notification.commit_sha }}</td>
-          <td>{{ notification.commit_datetime }}</td>
-          <td>{{ notification.commit_author }}</td>
-          <td>{{ notification.commit_message }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <form method="POST">
+        <label for="publisher">Publisher name:</label><br>
+        <input type="text" name="publisher"><br>
+        <label for="hostname">Host name:</label><br>
+        <input type="text" name="hostname"><br>
+        <input type="submit" value="Register">
+    </form>
 </div>
 </body>
 </html>
