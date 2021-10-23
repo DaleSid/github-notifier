@@ -179,7 +179,7 @@ def view_table():
 
 @app.route('/commits_notifier', methods = ['POST'])
 def commit_notif_push():
-    msg = dict(request.get_json())
+    msg = dict(json.loads(request.get_data()))
 
     publisher = msg['publisher']
     owner = msg['owner']
@@ -197,17 +197,17 @@ def commit_notif_push():
             'commit_datetime': commit_messages[i]['commit']['author']['date']
         }
         db.commit_messages_db.insert_one(item_doc)
-        # if i==0:
-        #     topic_doc = {
-        #         'publisher': publisher,
-        #         'repo_owner': owner,
-        #         'repo': repo
-        #     }
-        #     topic_doc_updated = {"$set": {
-        #         'last_update': commit_messages[i]['commit']['committer']['date']
-        #         }
-        #     }
-        #     db.repos_tb.update_one(topic_doc, topic_doc_updated)
+        if i==0:
+            topic_doc = {
+                'publisher': publisher,
+                'repo_owner': owner,
+                'repo': repo
+            }
+            topic_doc_updated = {"$set": {
+                'last_update': commit_messages[i]['commit']['committer']['date']
+                }
+            }
+            db.repos_tb.update_one(topic_doc, topic_doc_updated)
 
     subscribers_db = db.subscribers_db
     commit_messages_db = db.commit_messages_db
@@ -227,15 +227,6 @@ def commit_notif_push():
         temp_dict['commit_author'] = cursor['commit_author']
         temp_list.append(temp_dict.copy())
     cmdb = pd.DataFrame(temp_list)
-    # for cursor in sdb:
-    #     # return pd.DataFrame(list(cursor)).to_dict(orient = 'list')
-    #     if cursor['online'] == 1:
-    #         # sum = sum + cursor['username']
-    #         ip = cursor['current_ip']
-    #         subscriptions_list = pd.DataFrame(list(cursor['subscriptions']))
-    #         return {v: k for v, k in enumerate(cursor['subscriptions'])}
-
-    # return 'no return'
 
     for cursor in sdb:
         if cursor['online'] == 1:
@@ -246,7 +237,7 @@ def commit_notif_push():
                 try:
                     idx = cmdb_filtered.index[cmdb_filtered['commit_datetime'] == row['last_update']].tolist()
                     notif = cmdb_filtered.iloc[:idx[0]]
-                except ValueError:
+                except IndexError:
                     notif = cmdb_filtered
                 notif_json = {}
                 notif_json['UserName'] = cursor['username']
