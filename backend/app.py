@@ -77,7 +77,7 @@ def subscription_request():
                     "publisher": publisher,
                     "owner": owner,
                     "repo": repo,
-                    "last_update": "0"
+                    "last_update": "2000-01-01T00:00:00Z"
                 }
             },
             "$set": {
@@ -95,7 +95,7 @@ def subscription_request():
                     'publisher': publisher,
                     'owner': owner,
                     'repo': repo,
-                    'last_update': "0",
+                    'last_update': "2000-01-01T00:00:00Z",
                     'current_ip': request.remote_addr
                 }
             ]
