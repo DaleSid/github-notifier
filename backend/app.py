@@ -23,10 +23,15 @@ def get_return_dict(username: str, message: str = ""):
     query = {"username": username}
     doc = db.subscribers_db.find(query)
 
+    doc_publisher = db.publishers_db.find()
+    publishers = []
+    for i in doc_publisher:
+        publishers.append(i["publisher"])
+
     return {
         "Message": message,
         "Subscriptions": doc[0]['subscriptions'],
-        "Publishers": ["GitHub", "BitBucket", "GitLab"]
+        "Publishers": publishers
     }
 
 
@@ -267,17 +272,17 @@ def registration_request():
     doc = db.publishers_db.find(payload)
     if doc.count() == 0:
         payload["hostname"] = hostname
-        db.topics_db.insert_one(payload)
+        db.publishers_db.insert_one(payload)
     else:
         newvalues = {
             "$set": {
                 "hostname": hostname
             }
         }
-        db.subscribers_db.update_one(payload, newvalues)
+        db.publishers_db.update_one(payload, newvalues)
 
     try:
-        response = requests.post('http://' + hostname + ':5002/start_server', data=payload)
+        response = requests.post('http://' + hostname + ':5002/start_server', data=json.dumps(payload))
     except requests.exceptions.RequestException as e:
         return "Registration for " + publisher_name + " is failed"
 

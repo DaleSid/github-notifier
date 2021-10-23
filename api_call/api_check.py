@@ -2,20 +2,34 @@ import requests
 import os
 import json
 import pymongo
-from flask import Flask
-import time
+from flask import Flask, config, request
+from flask_caching import Cache
+import sched, time
+
+config = {
+    "DEBUG": True,  # some Flask specific configs
+    "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 0
+}
 
 app = Flask(__name__)
+app.config.from_mapping(config)
+cache = Cache(app)
 
-@app.route('/')
-def api_pull_to_db():
-    client = pymongo.MongoClient(host='backend_db',
+cache.add("gPublisherName", "")
+scheduler = sched.scheduler(time.time, time.sleep)
+
+client = pymongo.MongoClient(host='backend_db',
                         port=27017,
                         username='root',
                         password='pass',
                         authSource="admin")
-    db = client.subscribers_db
-    topics_db = db.topics_db
+
+db = client.subscribers_db
+topics_db = db.topics_db
+
+@app.route('/')
+def api_pull_to_db():
 
     timeout = time.time() + 300
 
@@ -48,6 +62,39 @@ def api_pull_to_db():
     # time.sleep(60)
     client.close()
     return 'This is done!'
+
+def commits_puller():
+    cursor = topics_db.find({})
+    for document in cursor:
+        publisher = document['publisher'].lower()
+        if(publisher == cache.get("gPublisherName")):
+            owner = document['owner'].lower()
+            repo = document['repo'].lower()
+            last_update = document['last_update']
+            query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
+            
+            r = requests.get(query_url)
+            commit_messages = r.json()
+            db_push_dict =  {}
+            db_push_dict['publisher'] = publisher
+            db_push_dict['owner'] = owner
+            db_push_dict['repo'] = repo
+            db_push_dict['commit_messages'] = commit_messages
+
+            try:
+                response = requests.post(f'http://backend_middle_1:5001/commits_notifier', json = db_push_dict)
+            except requests.exceptions.RequestException as e:
+                print('Cannot reach Server\n')
+    # scheduler.enter(60, 1, commits_puller)
+
+@app.route('/start_server', methods=['POST'])
+def start_server():
+    request_data = dict(json.loads(request.get_data()))
+    publisher_name = request_data['publisher']
+    cache.set("gPublisherName", publisher_name)
+    # scheduler.enter(60, 1, commits_puller)
+    # scheduler.run()
+    return True
 
 
 # @app.route('/notifications_check')
