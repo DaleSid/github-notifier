@@ -75,7 +75,7 @@ def login_request():
             'current_ip': request.remote_addr
         }
         db.subscribers_db.insert_one(item_doc)
-
+    refresh_advertisements()
     return get_return_dict(username=username, message=username + " logged in successfully")
 
 
