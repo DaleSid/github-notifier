@@ -1,6 +1,5 @@
 flask
 pymongo
 requests
-bson
 pandas
 numpy
