@@ -128,13 +128,14 @@ def unsubscribe_form_post():
 
 @app.route('/notifications', methods=['POST'])
 def notifications_post():
-    request_data = dict(request.get_json())
+    request_data = dict(json.loads(request.get_data()))
     if request_data['UserName'] == cache.get("gUser_name"):
         pass
     cache.set("gNewNotifications", len(request_data['Notifications']))
     notifications = cache.get("gNotifications")
     cache.set("gNotifications", request_data['Notifications'] + notifications)
-    return redirect(url_for('notification_table'))
+    return request_data
+    # return redirect(url_for('notification_table'))
     # return "Notifications have been posted successfully!"
 
 

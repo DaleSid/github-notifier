@@ -144,12 +144,12 @@
         {% for notification in notifications %}
         <tr>
           <td>{{ notification.publisher }}</td>
-          <td>{{ notification.owner }}</td>
+          <td>{{ notification.repo_owner }}</td>
           <td>{{ notification.repo }}</td>
-          <td>{{ notification.commitid }}</td>
-          <td>{{ notification.time }}</td>
-          <td>{{ notification.committer }}</td>
-          <td>{{ notification.message }}</td>
+          <td>{{ notification.commit_sha }}</td>
+          <td>{{ notification.commit_datetime }}</td>
+          <td>{{ notification.commit_author }}</td>
+          <td>{{ notification.commit_message }}</td>
         </tr>
         {% endfor %}
     </table>

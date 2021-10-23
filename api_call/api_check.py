@@ -27,12 +27,12 @@ def api_pull_to_db():
                 owner = document['owner'].lower()
                 repo = document['repo'].lower()
                 last_update = document['last_update']
-                # query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
+                query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
                 
-                # r = requests.get(query_url)
-                # commit_messages = r.json()
-                with open('checkfile.json') as f:
-                    commit_messages = json.load(f)
+                r = requests.get(query_url)
+                commit_messages = r.json()
+                # with open('checkfile.json') as f:
+                #     commit_messages = json.load(f)
                 db_push_dict =  {}
                 db_push_dict['publisher'] = publisher
                 db_push_dict['owner'] = owner
