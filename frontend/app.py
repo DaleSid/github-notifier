@@ -17,6 +17,7 @@ cache.add("gLatest_message", "")
 cache.add("gUser_name", "")
 cache.add("gSubscriptions", [])
 cache.add("gNotifications", [])
+cache.add("gNewNotifications", 0)
 cache.add("gPublishers", [])
 
 @app.route('/')
@@ -26,8 +27,9 @@ def login_form(message_text=""):
         cache.set("gUser_name", "")
         cache.set("gSubscriptions", [])
         cache.set("gNotifications", [])
+        cache.set("gNewNotifications", 0)
         cache.set("gPublishers", [])
-    return render_template('login.html', message=cache.get("gLatest_message"), notifications=cache.get("gNotifications"))
+    return render_template('login.html', message=cache.get("gLatest_message"), new_notifications=cache.get("gNewNotifications"))
 
 
 @app.route('/subscriptions')
@@ -38,7 +40,7 @@ def subscribe_form(message_text=""):
     publishers = cache.get("gPublishers")
     if not publishers:
         publishers = []
-    return render_template('subscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"), publishers=publishers, notifications=cache.get("gNotifications"))
+    return render_template('subscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"), publishers=publishers, new_notifications=cache.get("gNewNotifications"))
 
 @app.route('/unsubscribe')
 def unsubscribe_form(message_text=""):
@@ -49,18 +51,18 @@ def unsubscribe_form(message_text=""):
     if not subscriptions:
         subscriptions = []
         
-    return render_template('unsubscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"), subscriptions=subscriptions, notifications=cache.get("gNotifications"))
+    return render_template('unsubscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"), subscriptions=subscriptions, new_notifications=cache.get("gNewNotifications"))
 
 @app.route('/notifications')
 def notification_table(message_text=""):
-    if cache.get("gUser_name") == "":
-        cache.set("gLatest_message", "Please login first")
-        return redirect(url_for('login_form'))
+    # if cache.get("gUser_name") == "":
+    #     cache.set("gLatest_message", "Please login first")
+    #     return redirect(url_for('login_form'))
     notifications = cache.get("gNotifications")
     if not notifications:
         notifications = []
         
-    return render_template('notifications.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"), notifications=notifications)
+    return render_template('notifications.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"), notifications=notifications, new_notifications=cache.get("gNewNotifications"))
 
 @app.route('/', methods=['POST'])
 def login_form_post():
@@ -119,7 +121,14 @@ def unsubscribe_form_post():
 
 @app.route('/notifications', methods=['POST'])
 def notifications_post():
+    request_data = dict(request.get_json())
+    if request_data['UserName'] == cache.get("gUser_name"):
+        pass
+    cache.set("gNewNotifications", len(request_data['Notifications']))
+    notifications = cache.get("gNotifications")
+    cache.set("gNotifications", request_data['Notifications'] + notifications)
     return redirect(url_for('notification_table'))
+    # return "Notifications have been posted successfully!"
 
 
 if __name__ == "__main__":

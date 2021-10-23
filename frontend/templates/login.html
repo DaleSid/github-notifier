@@ -121,7 +121,7 @@
     <a href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
     <a href="{{ url_for('unsubscribe_form') }}"><i class="fa fa-fw fa-search-minus"></i> Unsubscribe</a> 
     <a class="notification" href="{{ url_for('notification_table') }}"><i class="fa fa-fw fa-bell"></i> Notifications
-        <span class="badge">{{notifications|length}}</span>
+        <span class="badge">{{ new_notifications }}</span>
     </a>
 </div>
 <div>
