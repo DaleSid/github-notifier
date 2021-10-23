@@ -23,7 +23,14 @@ cache.add("gPublishers", [])
 @app.route('/')
 def login_form(message_text=""):
     if cache.get("gUser_name") != "":
-        cache.set("gLatest_message", cache.get("gUser_name") + " logged out successfully")
+        payload = dict()
+        payload["UserName"] = cache.get("gUser_name")
+        try:
+            response = requests.post('http://backend_middle_1:5001/logout', data=payload)
+        except requests.exceptions.RequestException as e:
+            cache.set("gLatest_message", "Logout Failed! Login again!")
+        response_json = json.loads(response.text)
+        cache.set("gLatest_message", response_json['Message'])
         cache.set("gUser_name", "")
         cache.set("gSubscriptions", [])
         cache.set("gNotifications", [])
@@ -55,9 +62,9 @@ def unsubscribe_form(message_text=""):
 
 @app.route('/notifications')
 def notification_table(message_text=""):
-    # if cache.get("gUser_name") == "":
-    #     cache.set("gLatest_message", "Please login first")
-    #     return redirect(url_for('login_form'))
+    if cache.get("gUser_name") == "":
+        cache.set("gLatest_message", "Please login first")
+        return redirect(url_for('login_form'))
     notifications = cache.get("gNotifications")
     if not notifications:
         notifications = []

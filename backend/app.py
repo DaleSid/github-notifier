@@ -3,6 +3,8 @@ from pymongo import MongoClient
 import os
 import requests
 import json
+import pandas as pd
+import numpy as np
 
 app = Flask(__name__)
 
@@ -131,6 +133,59 @@ def view_table():
 
     return render_template('viewtable.html', items=items)
 
+@app.route('/commits_notifier', methods=['POST'])
+def commit_notif_push():
+    msg = dict(request.get_json())
+
+    publisher = msg['publisher']
+    owner = msg['owner']
+    repo = msg['repo']
+    commit_messages = msg['commit_messages']
+    
+    for i in range(0,len(commit_messages)-1):
+        item_doc = {
+            'publisher': publisher,
+            'repo_owner': owner,
+            'repo': repo,
+            'commit_sha': commit_messages[i]['sha'],
+            'commit_author': commit_messages[i]['commit']['author']['name'],
+            'commit_message': commit_messages[i]['commit']['message'],
+            'commit_datetime': commit_messages[i]['commit']['author']['date']
+        }
+        db.commit_messages_db.insert_one(item_doc)
+        # if i==0:
+        #     topic_doc = {
+        #         'publisher': publisher,
+        #         'repo_owner': owner,
+        #         'repo': repo
+        #     }
+        #     topic_doc_updated = {"$set": {
+        #         'last_update': commit_messages[i]['commit']['committer']['date']
+        #         }
+        #     }
+        #     db.repos_tb.update_one(topic_doc, topic_doc_updated)
+
+    subscribers_db = db.subscribers_db
+    commit_messages_db = db.commit_messages_db
+
+    sdb = subscribers_db.find({})
+    cmdb = pd.DataFrame(list(commit_messages_db.find({})))
+
+    for cursor in sdb:
+        if cursor['online'] == 1:
+            ip = cursor['current_ip']
+            subscriptions_list = pd.DataFrame(list(cursor['subscriptions']))
+            for index, row in subscriptions_list.iterrows():
+                cmdb_filtered = cmdb[((cmdb['publisher'] == row['publisher']) & (cmdb['repo_owner'] == row['owner']) & (cmdb['repo'] == row['repo']))]
+                idx = np.where(cmdb_filtered['commit_datetime'] == row['last_update'])
+                notif = cmdb_filtered.iloc[:idx,:]
+                try:
+                    response = requests.post(f'http://frontend_1:5000/notifications', json = notif.to_dict(orient = 'index'))
+                except requests.exceptions.RequestException as e:
+                    return 'Cannot reach Server\n'
+
+
+    return 'commit_notifier_completed!'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
