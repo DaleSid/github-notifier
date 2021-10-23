@@ -19,7 +19,7 @@ cache.add("gSubscriptions", [])
 cache.add("gNotifications", [])
 cache.add("gNewNotifications", 0)
 cache.add("gPublishers", [])
-
+cache.add("gAdvertisements", [])
 
 @app.route('/')
 def login_form(message_text=""):
@@ -37,6 +37,7 @@ def login_form(message_text=""):
         cache.set("gNotifications", [])
         cache.set("gNewNotifications", 0)
         cache.set("gPublishers", [])
+        cache.set("gAdvertisements", [])
     return render_template('login.html', message=cache.get("gLatest_message"),
                            new_notifications=cache.get("gNewNotifications"))
 
@@ -77,7 +78,7 @@ def notification_table(message_text=""):
 
     return render_template('notifications.html', user_name=cache.get("gUser_name"),
                            message=cache.get("gLatest_message"), notifications=notifications,
-                           new_notifications=cache.get("gNewNotifications"))
+                           new_notifications=cache.get("gNewNotifications"), advertisements=cache.get("gAdvertisements"))
 
 
 @app.route('/', methods=['POST'])
@@ -148,6 +149,17 @@ def notifications_post():
     return redirect(url_for('notification_table'))
     # return "Notifications have been posted successfully!"
 
+@app.route('/refresh_advertisements', methods=['POST'])
+def refresh_advertisements_post():
+    request_data = dict(json.loads(request.get_data()))
+
+    topics = request_data["Topics"]
+    topics_to_advertise = []
+    for topic in topics:
+        if "advertise" in topic and topic["advertise"] == 1:
+            topics_to_advertise.append(topic)
+    cache.set("gAdvertisements", topics_to_advertise)
+    return "Advertisements have been posted successfully!"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

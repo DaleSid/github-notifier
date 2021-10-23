@@ -114,20 +114,22 @@
 </style>
 <body>
 
-<h2>Broker: Git Daily Notifications: Register Publisher</h2>
+<h2>Broker: Git Daily Notifications: Advertise Topics</h2>
 <h4>Latest Message: {{ message }}</h4>
 <div class="navbar">
-    <a class="active" href="{{ url_for('register_form') }}"><i class="fa fa-fw fa-search-plus"></i> Register</a>
-    <a href="{{ url_for('advertise_form') }}"><i class="fa fa-fw fa-comment-o"></i> Advertise</a>
+    <a href="{{ url_for('register_form') }}"><i class="fa fa-fw fa-search-plus"></i> Register</a>
+    <a class="active" href="{{ url_for('advertise_form') }}"><i class="fa fa-fw fa-comment-o"></i> Advertise</a>
     <a href="{{ url_for('deadvertise_form') }}"><i class="fa fa-fw fa-ban"></i> Deadvertise</a>
 </div>
 <div>
     <form method="POST">
-        <label for="publisher">Publisher name:</label><br>
-        <input type="text" name="publisher"><br>
-        <label for="hostname">Host name:</label><br>
-        <input type="text" name="hostname"><br>
-        <input type="submit" value="Register">
+        <label for="topic">Choose a topic:</label><br>
+        <select id="topic" name="topic">
+        {% for item in items %}
+            <option value="{{ item.repo }}">{{ item.publisher }}, {{ item.owner }}, {{ item.repo }}</option>
+        {% endfor %}
+        </select><br>
+        <input type="submit" value="Advertise">
     </form>
 </div>
 </body>

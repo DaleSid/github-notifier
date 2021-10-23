@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 from pymongo import MongoClient
 import os
 import requests
 import json
+import sys
+from bson import json_util
 
 app = Flask(__name__)
 
@@ -33,6 +35,24 @@ def check1():
 @app.route('/register')
 def register_form():
     return render_template('register.html', message="Register Here for publishing!")
+
+@app.route('/advertise')
+def advertise_form():
+    query = {"advertise": 0}
+    doc = db.topics_db.find(query)
+    items = []
+    for i in doc:
+        items.append(i)
+    return render_template('advertise.html', message="Select Topics to advertise!", items=items)
+
+@app.route('/deadvertise')
+def deadvertise_form():
+    query = {"advertise": 1}
+    doc = db.topics_db.find(query)
+    items = []
+    for i in doc:
+        items.append(i)
+    return render_template('deadvertise.html', message="Select Topics to deadvertise!", items=items)
 
 @app.route('/login', methods=['POST'])
 def login_request():
@@ -81,6 +101,7 @@ def update_topics(publisher, owner, repo):
     doc = db.topics_db.find(query)
     if doc.count() == 0:
         query["last_update"] = "2000-01-01T00:00:00Z"
+        query["advertise"] = 0
         db.topics_db.insert_one(query)
 
 
@@ -171,6 +192,66 @@ def registration_request():
         return "Registration for " + publisher_name + " is failed"
 
     return "Registration for " + publisher_name + " is successful"
+
+def refresh_advertisement_send_request(ip: str, topics: dict):
+    try:
+        response = requests.post('http://' + ip + ':5000/refresh_advertisements', data=json_util.dumps(topics))
+    except requests.exceptions.RequestException as e:
+        return False
+    return True
+
+def refresh_advertisements():
+    topics: dict = {"Topics": []}
+    topics["Topics"] = list(db.topics_db.find())
+
+    query = {"online": 1}
+    doc = db.subscribers_db.find(query)
+    ret_val = False
+    for subscriber in doc:
+        ip = subscriber["current_ip"]
+        ret_val = refresh_advertisement_send_request(ip, topics)
+        if not ret_val:
+            temp_query = {"username": subscriber["username"]}
+            newvalues = {
+                "$set": {
+                    "online": 0
+                }
+            }
+            db.subscribers_db.update_one(temp_query, newvalues)
+    return ret_val
+            
+
+
+@app.route('/advertise', methods=['POST'])
+def advertise_request():
+    topic_to_advertise = request.form["topic"]
+    payload = {"repo": topic_to_advertise}
+    doc = db.topics_db.find(payload)
+    if doc.count():
+        newvalues = {
+            "$set": {
+                "advertise": 1
+            }
+        }
+        db.topics_db.update_one(payload, newvalues)
+    ret_val = refresh_advertisements()
+    return redirect(url_for('advertise_form'))
+
+@app.route('/deadvertise', methods=['POST'])
+def deadvertise_request():
+    print('It is working',file=sys.stderr)
+    topic_to_deadvertise = request.form["topic"]
+    payload = {"repo": topic_to_deadvertise}
+    doc = db.topics_db.find(payload)
+    if doc.count():
+        newvalues = {
+            "$set": {
+                "advertise": 0
+            }
+        }
+        db.topics_db.update_one(payload, newvalues)
+    ret_val = refresh_advertisements()
+    return redirect(url_for('deadvertise_form'))
 
 
 @app.route('/viewtable')
