@@ -55,9 +55,9 @@ def unsubscribe_form(message_text=""):
 
 @app.route('/notifications')
 def notification_table(message_text=""):
-    # if cache.get("gUser_name") == "":
-    #     cache.set("gLatest_message", "Please login first")
-    #     return redirect(url_for('login_form'))
+    if cache.get("gUser_name") == "":
+        cache.set("gLatest_message", "Please login first")
+        return redirect(url_for('login_form'))
     notifications = cache.get("gNotifications")
     if not notifications:
         notifications = []
