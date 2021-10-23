@@ -53,6 +53,21 @@ def login_request():
 
     return get_return_dict(username=username, message=username + " logged in successfully")
 
+@app.route('/logout', methods=['POST'])
+def logout_request():
+    username = request.form["UserName"]
+    query = {"username": username}
+    doc = db.subscribers_db.find(query)
+    if doc.count():
+        newvalues = {
+            "$set": {
+                "online": 0,
+                "current_ip": request.remote_addr
+            }
+        }
+        db.subscribers_db.update_one(query, newvalues)
+
+    return get_return_dict(username=username, message=username + " logged out successfully")
 
 def update_topics(publisher, owner, repo):
     query = {"publisher": publisher, "owner": owner, "repo": repo}
