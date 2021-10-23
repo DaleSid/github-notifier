@@ -30,6 +30,9 @@ def get_return_dict(username: str, message: str = ""):
 def check1():
     return 'Hello mic testing 1,2,3!'
 
+@app.route('/register')
+def register_form():
+    return render_template('register.html', message="Register Here for publishing!")
 
 @app.route('/login', methods=['POST'])
 def login_request():
@@ -143,6 +146,31 @@ def unsubscribe_request():
         db.subscribers_db.update_one(query, deleteValue)
 
     return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
+
+
+@app.route('/register', methods=['POST'])
+def registration_request():
+    publisher_name = request.form["publisher"]
+    hostname = request.form["hostname"]
+    payload = {"publisher": publisher_name}
+    doc = db.publishers_db.find(payload)
+    if doc.count() == 0:
+        payload["hostname"] = hostname
+        db.topics_db.insert_one(payload)
+    else:
+        newvalues = {
+            "$set": {
+                "hostname": hostname
+            }
+        }
+        db.subscribers_db.update_one(payload, newvalues)
+
+    try:
+        response = requests.post('http://' + hostname + ':5002/start_server', data=payload)
+    except requests.exceptions.RequestException as e:
+        return "Registration for " + publisher_name + " is failed"
+
+    return "Registration for " + publisher_name + " is successful"
 
 
 @app.route('/viewtable')
