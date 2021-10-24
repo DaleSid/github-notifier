@@ -30,7 +30,7 @@ def login_form(message_text=""):
             response = requests.post('http://backend_middle_1:5001/logout', data=payload)
         except requests.exceptions.RequestException as e:
             cache.set("gLatest_message", "Logout Failed! Login again!")
-        response_json = json.loads(response.text)
+        response_json = dict(json.loads(response.text))
         cache.set("gLatest_message", response_json['Message'])
         cache.set("gUser_name", "")
         cache.set("gSubscriptions", [])
@@ -93,7 +93,7 @@ def login_form_post():
         cache.set("gLatest_message", "Login Failed! Try again!")
         return redirect(url_for('login_form'))
 
-    response_json = json.loads(response.text)
+    response_json = dict(json.loads(response.text))
     cache.set("gLatest_message", response_json['Message'])
     cache.set("gSubscriptions", response_json['Subscriptions'])
     cache.set("gPublishers", response_json['Publishers'])
@@ -114,7 +114,7 @@ def subscription_form_post():
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('subscribe_form'))
 
-    response_json = json.loads(response.text)
+    response_json = dict(json.loads(response.text))
     cache.set("gLatest_message", response_json['Message'])
     cache.set("gSubscriptions", response_json['Subscriptions'])
     return redirect(url_for('subscribe_form'))
@@ -132,7 +132,7 @@ def unsubscribe_form_post():
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('unsubscribe_form'))
 
-    response_json = json.loads(response.text)
+    response_json = dict(json.loads(response.get_json()))
     cache.set("gLatest_message", response_json['Message'])
     cache.set("gSubscriptions", response_json['Subscriptions'])
     return redirect(url_for('unsubscribe_form'))
