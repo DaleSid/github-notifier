@@ -22,10 +22,10 @@ def api_pull_to_db():
     while(time.time() <= timeout):
         cursor = topics_db.find({})
         for document in cursor:
-            publisher = document['publisher'].lower()
-            if(publisher == 'github'):
-                owner = document['owner'].lower()
-                repo = document['repo'].lower()
+            publisher = document['publisher']
+            if(publisher == 'GitHub'):
+                owner = document['owner']
+                repo = document['repo']
                 last_update = document['last_update']
                 query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
                 

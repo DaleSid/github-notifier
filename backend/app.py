@@ -200,14 +200,14 @@ def commit_notif_push():
         if i==0:
             topic_doc = {
                 'publisher': publisher,
-                'repo_owner': owner,
+                'owner': owner,
                 'repo': repo
             }
             topic_doc_updated = {"$set": {
                 'last_update': commit_messages[i]['commit']['committer']['date']
                 }
             }
-            db.repos_tb.update_one(topic_doc, topic_doc_updated)
+            db.topics_db.update_one(topic_doc, topic_doc_updated)
 
     subscribers_db = db.subscribers_db
     commit_messages_db = db.commit_messages_db
@@ -231,9 +231,10 @@ def commit_notif_push():
     for cursor in sdb:
         if cursor['online'] == 1:
             ip = cursor['current_ip']
+            username = cursor['username']
             subscriptions_list = pd.DataFrame(list(cursor['subscriptions']))
             for index, row in subscriptions_list.iterrows():
-                cmdb_filtered = cmdb[(cmdb['publisher'] == row['publisher'].lower()) & (cmdb['repo_owner'] == row['owner'].lower()) & (cmdb['repo'] == row['repo'].lower())]
+                cmdb_filtered = cmdb[(cmdb['publisher'] == row['publisher']) & (cmdb['repo_owner'] == row['owner']) & (cmdb['repo'] == row['repo'])]
                 try:
                     idx = cmdb_filtered.index[cmdb_filtered['commit_datetime'] == row['last_update']].tolist()
                     notif = cmdb_filtered.iloc[:idx[0]]
@@ -247,8 +248,20 @@ def commit_notif_push():
                     response = requests.post(f'http://{ip}:5000/notifications', data = json.dumps(notif_json))
                 except requests.exceptions.RequestException as e:
                     return 'Cannot reach Server\n'
-
-                return response.text
+                
+                if len(notif):
+                    subscriber_query = {
+                        'username': username,
+                        'subscriptions.publisher': row['publisher'],
+                        'subscriptions.owner': row['owner'],
+                        'subscriptions.repo': row['repo'],
+                    }
+                    subscriber_doc_updated = {"$set": {
+                        'subscriptions.$.last_update': notif['commit_datetime'][0]
+                        }
+                    }
+                    db.subscribers_db.update_one(subscriber_query, subscriber_doc_updated)
+    return True
 
 @app.route('/register', methods=['POST'])
 def registration_request():

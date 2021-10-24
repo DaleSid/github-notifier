@@ -156,15 +156,27 @@
           <th>Message</th>
         </tr>
         {% for notification in notifications %}
-        <tr>
-          <td>{{ notification.publisher }}</td>
-          <td>{{ notification.repo_owner }}</td>
-          <td>{{ notification.repo }}</td>
-          <td>{{ notification.commit_sha }}</td>
-          <td>{{ notification.commit_datetime }}</td>
-          <td>{{ notification.commit_author }}</td>
-          <td>{{ notification.commit_message }}</td>
-        </tr>
+        {% if loop.index0 < new_notifications%}
+            <tr>
+            <td class="notification">{{ notification.publisher }}<span class="badge">{{ loop.index0 + 1 }}</span></td>
+            <td>{{ notification.repo_owner }}</td>
+            <td>{{ notification.repo }}</td>
+            <td>{{ notification.commit_sha }}</td>
+            <td>{{ notification.commit_datetime }}</td>
+            <td>{{ notification.commit_author }}</td>
+            <td>{{ notification.commit_message }}</td>
+            </tr>
+        {% else %}
+            <tr>
+            <td>{{ notification.publisher }}</td>
+            <td>{{ notification.repo_owner }}</td>
+            <td>{{ notification.repo }}</td>
+            <td>{{ notification.commit_sha }}</td>
+            <td>{{ notification.commit_datetime }}</td>
+            <td>{{ notification.commit_author }}</td>
+            <td>{{ notification.commit_message }}</td>
+            </tr>
+        {% endif %}
         {% endfor %}
     </table>
 </div>
