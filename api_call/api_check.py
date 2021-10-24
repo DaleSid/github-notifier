@@ -17,7 +17,7 @@ def api_pull_to_db():
     db = client.subscribers_db
     topics_db = db.topics_db
 
-    timeout = time.time() + 300
+    timeout = time.time() + 1200
 
     while(time.time() <= timeout):
         cursor = topics_db.find({})
@@ -44,8 +44,7 @@ def api_pull_to_db():
                     response = requests.post(f'http://backend_middle_1:5001/commits_notifier', data = json.dumps(db_push_dict))
                 except requests.exceptions.RequestException as e:
                     return 'Cannot reach server!'
-        break
-    # time.sleep(60)
+        time.sleep(60)
     client.close()
     return 'This is done!'
 
