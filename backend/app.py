@@ -78,6 +78,7 @@ def login_request():
         }
         db.subscribers_db.insert_one(item_doc)
     refresh_advertisements()
+    send_notifications()
     return get_return_dict(username=username, message=username + " logged in successfully")
 
 
@@ -94,7 +95,7 @@ def logout_request():
             }
         }
         db.subscribers_db.update_one(query, newvalues)
-
+    send_notifications()
     return get_return_dict(username=username, message=username + " logged out successfully")
 
 
@@ -148,7 +149,7 @@ def subscription_request():
         db.subscribers_db.insert_one(item_doc)
 
     update_topics(publisher, owner, repo)
-
+    send_notifications()
     return get_return_dict(username=username, message=username + " requested access to " + repo + " repo from " + owner)
 
 
@@ -167,7 +168,7 @@ def unsubscribe_request():
             }
         }
         db.subscribers_db.update_one(query, deleteValue)
-
+    send_notifications()
     return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
 
 @app.route('/viewtable')
@@ -208,7 +209,9 @@ def commit_notif_push():
                 }
             }
             db.topics_db.update_one(topic_doc, topic_doc_updated)
+    send_notifications()
 
+def send_notifications():
     subscribers_db = db.subscribers_db
     commit_messages_db = db.commit_messages_db
 
@@ -292,6 +295,7 @@ def refresh_advertisement_send_request(ip: str, topics: dict):
         response = requests.post('http://' + ip + ':5000/refresh_advertisements', data=json_util.dumps(topics))
     except requests.exceptions.RequestException as e:
         return False
+    send_notifications()
     return True
 
 def refresh_advertisements():
