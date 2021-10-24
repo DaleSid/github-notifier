@@ -41,9 +41,9 @@ def api_pull_to_db():
                 # db_push_json = json.dumps(db_push_dict)
 
                 try:
-                    response = requests.post(f'http://backend_middle_1:5001/commits_notifier', data = db_push_dict)
+                    response = requests.post(f'http://backend_middle_1:5001/commits_notifier', data = json.dumps(db_push_dict))
                 except requests.exceptions.RequestException as e:
-                    print('Cannot reach Server\n')
+                    return 'Cannot reach server!'
         break
     # time.sleep(60)
     client.close()
