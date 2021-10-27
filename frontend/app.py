@@ -21,23 +21,26 @@ cache.add("gNewNotifications", 0)
 cache.add("gPublishers", [])
 cache.add("gAdvertisements", [])
 
+def logout():
+    payload = dict()
+    payload["UserName"] = cache.get("gUser_name")
+    try:
+        response = requests.post('http://backend_middle_1:5001/logout', data=payload)
+    except requests.exceptions.RequestException as e:
+        cache.set("gLatest_message", "Logout Failed! Login again!")
+    response_json = dict(json.loads(response.text))
+    cache.set("gLatest_message", response_json['Message'])
+    cache.set("gUser_name", "")
+    cache.set("gSubscriptions", [])
+    cache.set("gNotifications", [])
+    cache.set("gNewNotifications", 0)
+    cache.set("gPublishers", [])
+    cache.set("gAdvertisements", [])
+
 @app.route('/')
 def login_form(message_text=""):
     if cache.get("gUser_name") != "":
-        payload = dict()
-        payload["UserName"] = cache.get("gUser_name")
-        try:
-            response = requests.post('http://backend_middle_1:5001/logout', data=payload)
-        except requests.exceptions.RequestException as e:
-            cache.set("gLatest_message", "Logout Failed! Login again!")
-        response_json = dict(json.loads(response.text))
-        cache.set("gLatest_message", response_json['Message'])
-        cache.set("gUser_name", "")
-        cache.set("gSubscriptions", [])
-        cache.set("gNotifications", [])
-        cache.set("gNewNotifications", 0)
-        cache.set("gPublishers", [])
-        cache.set("gAdvertisements", [])
+        logout()
     return render_template('login.html', message=cache.get("gLatest_message"),
                            new_notifications=cache.get("gNewNotifications"))
 
@@ -132,7 +135,7 @@ def unsubscribe_form_post():
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('unsubscribe_form'))
 
-    response_json = dict(json.loads(response.get_json()))
+    response_json = dict(json.loads(response.text))
     cache.set("gLatest_message", response_json['Message'])
     cache.set("gSubscriptions", response_json['Subscriptions'])
     return redirect(url_for('unsubscribe_form'))
