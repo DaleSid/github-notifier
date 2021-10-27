@@ -26,8 +26,9 @@ def logout():
     payload["UserName"] = cache.get("gUser_name")
     try:
         response = requests.post('http://backend_middle_1:5001/logout', data=payload)
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         cache.set("gLatest_message", "Logout Failed! Login again!")
+
     response_json = dict(json.loads(response.text))
     cache.set("gLatest_message", response_json['Message'])
     cache.set("gUser_name", "")
@@ -92,7 +93,7 @@ def login_form_post():
 
     try:
         response = requests.post('http://backend_middle_1:5001/login', data=payload)
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         cache.set("gLatest_message", "Login Failed! Try again!")
         return redirect(url_for('login_form'))
 
@@ -113,7 +114,7 @@ def subscription_form_post():
 
     try:
         response = requests.post('http://backend_middle_1:5001/subscribe', data=payload)
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('subscribe_form'))
 
@@ -131,7 +132,7 @@ def unsubscribe_form_post():
 
     try:
         response = requests.post('http://backend_middle_1:5001/unsubscribe', data=payload)
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('unsubscribe_form'))
 
