@@ -24,10 +24,10 @@ Please find below the steps to be followed to obtain a successful implementation
 - `docker build -t frontend-image .` 
   
 2) Use the image to create the front end container
-- `docker run --name frontend-container -p 5000:5000 frontend-image`
+- `docker run --name frontend-container -p 5003:5003 frontend-image`
 - You can create multiple instances of front end containers (Subscribers). These needs to be exposed to different local ports.
   
-3) This will run the frontend container on port 5000 in localhost
+3) This will run the frontend container on port 5003 in localhost
 
 4) In another terminal, navigate to the api_call folder and run the following command
 - `docker build -t apicall-image .`

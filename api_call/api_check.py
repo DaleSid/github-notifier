@@ -4,6 +4,7 @@ import json
 import pymongo
 from flask import Flask
 import time
+import random
 
 app = Flask(__name__)
 
@@ -34,6 +35,7 @@ def api_pull_to_db():
                 # with open('checkfile.json') as f:
                 #     commit_messages = json.load(f)
                 db_push_dict =  {}
+                db_push_dict['message_type'] = 'publish'
                 db_push_dict['publisher'] = publisher
                 db_push_dict['owner'] = owner
                 db_push_dict['repo'] = repo
@@ -41,9 +43,12 @@ def api_pull_to_db():
                 # db_push_json = json.dumps(db_push_dict)
 
                 try:
-                    response = requests.post(f'http://backend_middle_1:5001/commits_notifier', data = json.dumps(db_push_dict))
+                    brokers = {'backend_broker1_1':'5101', 'backend_broker2_1':'5102', 'backend_broker3_1':'5103'}
+                    broker_add = random.choice(list(brokers.keys()))
+                    response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/commits_notifier', data = json.dumps(db_push_dict))
                 except requests.exceptions.RequestException as e:
-                    return 'Cannot reach server!'
+                    return str(e)
+                    # return 'Cannot reach server!'
         time.sleep(60)
     client.close()
     return 'This is done!'

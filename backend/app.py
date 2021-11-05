@@ -18,6 +18,27 @@ client = MongoClient(host='backend_db',
 db = client["subscribers_db"]
 topics = client["topics_db"]
 
+subscriptions_list = {}
+subscriptions_list['neighbours'] = {'backend_broker2_1':'5102', 'backend_broker3_1':'5103'}
+subscriptions_list['subscriptions'] = []
+
+def EN(msg):
+    repo = msg['repo']
+    if (((repo[0]>='a') & (repo[0]<='h')) | ((repo[0]>='A') & (repo[0]<='H'))):
+        return ['5101']
+    if (((repo[0]>='i') & (repo[0]<='q')) | ((repo[0]>='I') & (repo[0]<='Q'))):
+        return ['5102']
+    if (((repo[0]>='r') & (repo[0]<='z')) | ((repo[0]>='R') & (repo[0]<='Z'))):
+        return ['5103']
+
+def SN(msg):
+    repo = msg['Repo']
+    if (((repo[0]>='a') & (repo[0]<='h')) | ((repo[0]>='A') & (repo[0]<='H'))):
+        return ['5101']
+    if (((repo[0]>='i') & (repo[0]<='q')) | ((repo[0]>='I') & (repo[0]<='Q'))):
+        return ['5102']
+    if (((repo[0]>='r') & (repo[0]<='z')) | ((repo[0]>='R') & (repo[0]<='Z'))):
+        return ['5103']
 
 def get_return_dict(username: str, message: str = ""):
     query = {"username": username}
@@ -37,7 +58,7 @@ def get_return_dict(username: str, message: str = ""):
 
 @app.route('/')
 def check1():
-    return 'Hello mic testing 1,2,3!'
+    return 'This is broker 1!'
 
 @app.route('/register')
 def register_form():
@@ -63,7 +84,8 @@ def deadvertise_form():
 
 @app.route('/login', methods=['POST'])
 def login_request():
-    username = request.form["UserName"]
+    msg = dict(json.loads(request.get_data()))
+    username = msg["UserName"]
     query = {"username": username}
     doc = db.subscribers_db.find(query)
     if doc.count():
@@ -89,7 +111,8 @@ def login_request():
 
 @app.route('/logout', methods=['POST'])
 def logout_request():
-    username = request.form["UserName"]
+    msg = dict(json.loads(request.get_data()))
+    username = msg["UserName"]
     query = {"username": username}
     doc = db.subscribers_db.find(query)
     if doc.count():
@@ -115,66 +138,94 @@ def update_topics(publisher, owner, repo):
 
 @app.route('/subscribe', methods=['POST'])
 def subscription_request():
-    username = request.form["UserName"]
-    owner = request.form["Owner"]
-    repo = request.form["Repo"]
-    publisher = request.form["Provider"]
-    query = {"username": username}
-    doc = db.subscribers_db.find(query)
-    if doc.count():
-        newvalues = {
-            "$push": {
-                "subscriptions": {
-                    "publisher": publisher,
-                    "owner": owner,
-                    "repo": repo,
-                    "last_update": "2000-01-01T00:00:00Z"
+    msg = dict(json.loads(request.get_data()))
+    if msg['message_type'] == 'subscribe':
+        rvlist = SN(msg)
+        # return str(type(rvlist))
+        if '5101' not in rvlist:
+            neighbours = subscriptions_list['neighbours']
+            # return str(neighbours)
+            for i in neighbours.items():
+                try:
+                    response = requests.post(f'http://{i[0]}:{i[1]}/subscribe', data = json.dumps(msg))
+                except requests.exceptions.RequestException as e:
+                    # return str(e)
+                    return 'Cannot reach server!'
+        else:
+            username = msg["UserName"]
+            owner = msg["Owner"]
+            repo = msg["Repo"]
+            publisher = msg["Provider"]
+            query = {"username": username}
+            doc = db.subscribers_db.find(query)
+            if doc.count():
+                sub_query = {"username": username, "repo": repo}
+                sub_doc = db.subscribers_db.find(sub_query)
+                if not sub_doc.count():
+                    newvalues = {
+                        "$push": {
+                            "subscriptions": {
+                                "publisher": publisher,
+                                "owner": owner,
+                                "repo": repo,
+                                "last_update": "2000-01-01T00:00:00Z"
+                            }
+                        },
+                        "$set": {
+                            "current_ip": request.remote_addr,
+                            "online": 1
+                        }
+                    }
+                    db.subscribers_db.update_one(query, newvalues)
+            else:
+                item_doc = {
+                    'username': username,
+                    'online': 1,
+                    'subscriptions': [
+                        {
+                            'publisher': publisher,
+                            'owner': owner,
+                            'repo': repo,
+                            'last_update': "2000-01-01T00:00:00Z",
+                            'current_ip': request.remote_addr
+                        }
+                    ]
                 }
-            },
-            "$set": {
-                "current_ip": request.remote_addr,
-                "online": 1
-            }
-        }
-        db.subscribers_db.update_one(query, newvalues)
-    else:
-        item_doc = {
-            'username': username,
-            'online': 1,
-            'subscriptions': [
-                {
-                    'publisher': publisher,
-                    'owner': owner,
-                    'repo': repo,
-                    'last_update': "2000-01-01T00:00:00Z",
-                    'current_ip': request.remote_addr
-                }
-            ]
-        }
-        db.subscribers_db.insert_one(item_doc)
+                db.subscribers_db.insert_one(item_doc)
 
-    update_topics(publisher, owner, repo)
-    # send_notifications()
-    return get_return_dict(username=username, message=username + " requested access to " + repo + " repo from " + owner)
+            update_topics(publisher, owner, repo)
+            # send_notifications()
+            return get_return_dict(username=username, message=username + " requested access to " + repo + " repo from " + owner)
 
 
 @app.route('/unsubscribe', methods=['POST'])
 def unsubscribe_request():
-    username = request.form["UserName"]
-    repo = request.form["Repo"]
-    query = {"username": username}
-    doc = db.subscribers_db.find(query)
-    if doc.count():
-        deleteValue = {
-            "$pull": {
-                'subscriptions': {
-                    'repo': repo
+    msg = dict(json.loads(request.get_data()))
+    if(msg['message_type'] == 'unsubscribe'):
+        rvlist = SN(msg)
+        if '5102' not in rvlist:
+            neighbours = subscriptions_list['neighbours']
+            for i in neighbours.items():
+                try:
+                    response = requests.post(f'http://{i[0]}:{i[1]}/unsubscribe', data = json.dumps(msg))
+                except requests.exceptions.RequestException as e:
+                    return 'Cannot reach server!'
+        else:
+            username = msg["UserName"]
+            repo = msg["Repo"]
+            query = {"username": username}
+            doc = db.subscribers_db.find(query)
+            if doc.count():
+                deleteValue = {
+                    "$pull": {
+                        'subscriptions': {
+                            'repo': repo
+                        }
+                    }
                 }
-            }
-        }
-        db.subscribers_db.update_one(query, deleteValue)
-    # send_notifications()
-    return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
+                db.subscribers_db.update_one(query, deleteValue)
+            # send_notifications()
+            return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
 
 @app.route('/viewtable')
 def view_table():
@@ -184,37 +235,46 @@ def view_table():
     return render_template('viewtable.html', items=items)
 
 @app.route('/commits_notifier', methods = ['POST'])
-def commit_notif_push():
+def pub_routing():
     msg = dict(json.loads(request.get_data()))
-
-    publisher = msg['publisher']
-    owner = msg['owner']
-    repo = msg['repo']
-    commit_messages = msg['commit_messages']
-    
-    for i in range(0,len(commit_messages)-1):
-        item_doc = {
-            'publisher': publisher,
-            'repo_owner': owner,
-            'repo': repo,
-            'commit_sha': commit_messages[i]['sha'],
-            'commit_author': commit_messages[i]['commit']['author']['name'],
-            'commit_message': commit_messages[i]['commit']['message'],
-            'commit_datetime': commit_messages[i]['commit']['author']['date']
-        }
-        db.commit_messages_db.insert_one(item_doc)
-        if i==0:
-            topic_doc = {
-                'publisher': publisher,
-                'owner': owner,
-                'repo': repo
-            }
-            topic_doc_updated = {"$set": {
-                'last_update': commit_messages[i]['commit']['committer']['date']
+    if msg['message_type'] == 'publish':
+        rvlist = EN(msg)
+        if '5101' not in rvlist:
+            neighbours = subscriptions_list['neighbours']
+            for i in neighbours.items():
+                try:
+                    response = requests.post(f'http://{i[0]}:{i[1]}/commits_notifier', data = json.dumps(msg))
+                except requests.exceptions.RequestException as e:
+                    return 'Cannot reach server!'
+        else:
+            publisher = msg['publisher']
+            owner = msg['owner']
+            repo = msg['repo']
+            commit_messages = msg['commit_messages']
+            
+            for i in range(0,len(commit_messages)-1):
+                item_doc = {
+                    'publisher': publisher,
+                    'repo_owner': owner,
+                    'repo': repo,
+                    'commit_sha': commit_messages[i]['sha'],
+                    'commit_author': commit_messages[i]['commit']['author']['name'],
+                    'commit_message': commit_messages[i]['commit']['message'],
+                    'commit_datetime': commit_messages[i]['commit']['author']['date']
                 }
-            }
-            db.topics_db.update_one(topic_doc, topic_doc_updated)
-    send_notifications()
+                db.commit_messages_db.insert_one(item_doc)
+                if i==0:
+                    topic_doc = {
+                        'publisher': publisher,
+                        'owner': owner,
+                        'repo': repo
+                    }
+                    topic_doc_updated = {"$set": {
+                        'last_update': commit_messages[i]['commit']['committer']['date']
+                        }
+                    }
+                    db.topics_db.update_one(topic_doc, topic_doc_updated)
+            # send_notifications()
 
 def send_notifications():
     subscribers_db = db.subscribers_db
@@ -253,7 +313,7 @@ def send_notifications():
                 notif_json['Notifications'] = [v for v in notif.to_dict(orient = 'index').values()]
 
                 try:
-                    response = requests.post(f'http://{ip}:5000/notifications', data = json.dumps(notif_json))
+                    response = requests.post(f'http://{ip}:5003/notifications', data = json.dumps(notif_json))
                 except requests.exceptions.RequestException as e:
                     return 'Cannot reach Server'
                 
@@ -297,7 +357,7 @@ def registration_request():
 
 def refresh_advertisement_send_request(ip: str, topics: dict):
     try:
-        response = requests.post('http://' + ip + ':5000/refresh_advertisements', data=json_util.dumps(topics))
+        response = requests.post('http://' + ip + ':5003/refresh_advertisements', data=json_util.dumps(topics))
     except requests.exceptions.RequestException as e:
         return False
     # send_notifications()
@@ -358,4 +418,4 @@ def deadvertise_request():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5101, debug=True)
