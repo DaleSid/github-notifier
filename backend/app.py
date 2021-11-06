@@ -106,7 +106,7 @@ def login_request():
         }
         db.subscribers_db.insert_one(item_doc)
     refresh_advertisements()
-    # send_notifications()
+    send_notifications()
     return get_return_dict(username=username, message=username + " logged in successfully")
 
 
@@ -124,7 +124,7 @@ def logout_request():
             }
         }
         db.subscribers_db.update_one(query, newvalues)
-    # send_notifications()
+    send_notifications()
     return get_return_dict(username=username, message=username + " logged out successfully")
 
 
@@ -201,7 +201,7 @@ def subscription_request():
                 db.subscribers_db.insert_one(item_doc)
 
             update_topics(publisher, owner, repo)
-            # send_notifications()
+            send_notifications()
         return get_return_dict(username=username, message=username + " requested access to " + repo + " repo from " + owner)
 
 
@@ -239,7 +239,7 @@ def unsubscribe_request():
                     }
                 }
                 db.subscribers_db.update_one(query, deleteValue)
-            # send_notifications()
+        send_notifications()
         return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
 
 @app.route('/viewtable')
@@ -264,7 +264,7 @@ def pub_routing():
         if 'messages_received_by' not in msg:
                 msg['messages_received_by'] = []
         msg['messages_received_by'].append(hostname)
-
+        # return str(msg)
         if hostname not in rvlist:
             neighbours = subscriptions_list['neighbours']
             for i in neighbours.items():
@@ -310,6 +310,9 @@ def send_notifications():
     temp_dict = {}
     temp_list = []
     i = 0
+    if not cdb.count():
+        return
+
     for cursor in cdb:
         temp_dict['publisher'] = cursor['publisher']
         temp_dict['repo_owner'] = cursor['repo_owner']
@@ -385,7 +388,7 @@ def refresh_advertisement_send_request(ip: str, topics: dict):
         response = requests.post('http://' + ip + ':5003/refresh_advertisements', data=json_util.dumps(topics))
     except Exception as e:
         return False
-    # send_notifications()
+    send_notifications()
     return True
 
 def refresh_advertisements():

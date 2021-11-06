@@ -51,6 +51,8 @@ def api_pull_to_db():
                     except requests.exceptions.RequestException as e:
                         return str(e)
                         # return 'Cannot reach server!'
+                    # return str(db_push_dict)
+                    # return response.text
         time.sleep(60)
     client.close()
     return 'This is done!'
