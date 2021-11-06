@@ -333,7 +333,7 @@ def send_notifications():
                 cmdb_filtered = cmdb[(cmdb['publisher'] == row['publisher']) & (cmdb['repo_owner'] == row['owner']) & (cmdb['repo'] == row['repo'])]
                 try:
                     idx = cmdb_filtered.index[cmdb_filtered['commit_datetime'] == row['last_update']].tolist()
-                    notif = cmdb_filtered.iloc[:idx[0]]
+                    notif = cmdb_filtered.iloc[:idx[0]].reset_index()
                 except IndexError:
                     notif = cmdb_filtered
                 notif_json = {}
@@ -352,8 +352,9 @@ def send_notifications():
                         'subscriptions.owner': row['owner'],
                         'subscriptions.repo': row['repo'],
                     }
+                    last_commit_time = notif_json['Notifications'][0]['commit_datetime']
                     subscriber_doc_updated = {"$set": {
-                        'subscriptions.$.last_update': notif['commit_datetime'][0]
+                        'subscriptions.$.last_update': last_commit_time
                         }
                     }
                     db.subscribers_db.update_one(subscriber_query, subscriber_doc_updated)
