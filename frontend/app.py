@@ -28,13 +28,17 @@ def logout():
     try:
         response = requests.post('http://backend_broker_1:5101/logout', data=json.dumps(payload))
     except Exception as e:
+        cache.set("gUser_name", "")
         cache.set("gLatest_message", "Logout Failed! Login again!")
         return 'Error'
     
     # return response.text
-    response_json = json.loads(response.text)
-    cache.set("gLatest_message", response_json['Message'])
-    cache.set("gUser_name", "")
+    try:
+        response_json = json.loads(response.text)
+        cache.set("gLatest_message", response_json['Message'])
+    except Exception as e:
+        cache.set("gLatest_message", str(e))
+    
     cache.set("gSubscriptions", [])
     cache.set("gNotifications", [])
     cache.set("gNewNotifications", 0)
@@ -100,10 +104,15 @@ def login_form_post():
         cache.set("gLatest_message", "Login Failed! Try again!")
         return redirect(url_for('login_form'))
     # return response.text
-    response_json = dict(json.loads(response.text))
-    cache.set("gLatest_message", response_json['Message'])
-    cache.set("gSubscriptions", response_json['Subscriptions'])
-    cache.set("gPublishers", response_json['Publishers'])
+    try:
+        response_json = dict(json.loads(response.text))
+        cache.set("gLatest_message", response_json['Message'])
+        cache.set("gSubscriptions", response_json['Subscriptions'])
+        cache.set("gPublishers", response_json['Publishers'])
+    except Exception as e:
+        cache.set("gLatest_message", str(e))
+        cache.set("gSubscriptions", [])
+        cache.set("gPublishers", [])
     return redirect(url_for('subscribe_form'))
 
 
@@ -128,9 +137,13 @@ def subscription_form_post():
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('subscribe_form'))
     # return response.text
-    response_json = dict(json.loads(response.text))
-    cache.set("gLatest_message", response_json['Message'])
-    cache.set("gSubscriptions", response_json['Subscriptions'])
+    try:
+        response_json = dict(json.loads(response.text))
+        cache.set("gLatest_message", response_json['Message'])
+        cache.set("gSubscriptions", response_json['Subscriptions'])
+    except Exception as e:
+        cache.set("gLatest_message", str(e))
+        cache.set("gSubscriptions", [])
     return redirect(url_for('subscribe_form'))
 
 
@@ -153,35 +166,48 @@ def unsubscribe_form_post():
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('unsubscribe_form'))
     # return response.text
-    response_json = dict(json.loads(response.text))
-    cache.set("gLatest_message", response_json['Message'])
-    cache.set("gSubscriptions", response_json['Subscriptions'])
+    try:
+        response_json = dict(json.loads(response.text))
+        cache.set("gLatest_message", response_json['Message'])
+        cache.set("gSubscriptions", response_json['Subscriptions'])
+    except Exception as e:
+        cache.set("gLatest_message", str(e))
+        cache.set("gSubscriptions", [])
     return redirect(url_for('unsubscribe_form'))
 
 
 @app.route('/notifications', methods=['POST'])
 def notifications_post():
-    request_data = dict(json.loads(request.get_data()))
-    if request_data['UserName'] == cache.get("gUser_name"):
-        pass
-    cache.set("gNewNotifications", len(request_data['Notifications']))
-    notifications = cache.get("gNotifications")
-    cache.set("gNotifications", request_data['Notifications'] + notifications)
+    try:
+        request_data = dict(json.loads(request.get_data()))
+        if request_data['UserName'] == cache.get("gUser_name"):
+            pass
+        cache.set("gNewNotifications", len(request_data['Notifications']))
+        notifications = cache.get("gNotifications")
+        cache.set("gNotifications", request_data['Notifications'] + notifications)
+    except Exception as e:
+        cache.set("gNewNotifications", 0)
+        notifications = cache.get("gNotifications")
+        cache.set("gNotifications", notifications)
     return request_data
     # return redirect(url_for('notification_table'))
     # return "Notifications have been posted successfully!"
 
 @app.route('/refresh_advertisements', methods=['POST'])
 def refresh_advertisements_post():
-    request_data = dict(json.loads(request.get_data()))
+    try:
+        request_data = dict(json.loads(request.get_data()))
 
-    topics = request_data["Topics"]
-    topics_to_advertise = []
-    for topic in topics:
-        if "advertise" in topic and topic["advertise"] == 1:
-            topics_to_advertise.append(topic)
-    cache.set("gAdvertisements", topics_to_advertise)
-    return "Advertisements have been posted successfully!"
+        topics = request_data["Topics"]
+        topics_to_advertise = []
+        for topic in topics:
+            if "advertise" in topic and topic["advertise"] == 1:
+                topics_to_advertise.append(topic)
+        cache.set("gAdvertisements", topics_to_advertise)
+        return "Advertisements have been posted successfully!"
+    except Exception as e:
+        cache.set("gAdvertisements", [])
+        return "Advertisements posting unsuccessful!"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5003, debug=True)

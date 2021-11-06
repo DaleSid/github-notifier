@@ -141,26 +141,32 @@ def update_topics(publisher, owner, repo):
 def subscription_request():
     msg = dict(json.loads(request.get_data()))
     if msg['message_type'] == 'subscribe':
+        username = msg["UserName"]
+        owner = msg["Owner"]
+        repo = msg["Repo"]
+        publisher = msg["Provider"]
+
         rvlist = SN(msg)
-        # return str("Dale" + socket.gethostname())
-        if socket.gethostname() not in rvlist:
+        hostname = socket.gethostname()
+
+        if 'messages_received_by' not in msg:
+                msg['messages_received_by'] = []
+        msg['messages_received_by'].append(hostname)
+
+        if hostname not in rvlist:
             neighbours = subscriptions_list['neighbours']
             # return str(neighbours)
             for i in neighbours.items():
-                try:
-                    response = requests.post(f'http://{i[0]}:{i[1]}/subscribe', data = json.dumps(msg))
-                except requests.exceptions.RequestException as e:
-                    # return str(e)
-                    return 'Cannot reach server!'
+                if i[0] not in msg['messages_received_by']:
+                    try:
+                        response = requests.post(f'http://{i[0]}:{i[1]}/subscribe', data = json.dumps(msg))
+                    except Exception as e:
+                        return str(e)
         else:
-            username = msg["UserName"]
-            owner = msg["Owner"]
-            repo = msg["Repo"]
-            publisher = msg["Provider"]
             query = {"username": username}
             doc = db.subscribers_db.find(query)
             if doc.count():
-                sub_query = {"username": username, "repo": repo}
+                sub_query = {"username": username, "subscriptions.repo": repo}
                 sub_doc = db.subscribers_db.find(sub_query)
                 if not sub_doc.count():
                     newvalues = {
@@ -203,17 +209,25 @@ def subscription_request():
 def unsubscribe_request():
     msg = dict(json.loads(request.get_data()))
     if(msg['message_type'] == 'unsubscribe'):
+        username = msg["UserName"]
+        repo = msg["Repo"]
+
         rvlist = SN(msg)
-        if socket.gethostname() not in rvlist:
+        hostname = socket.gethostname()
+
+        if 'messages_received_by' not in msg:
+                msg['messages_received_by'] = []
+        msg['messages_received_by'].append(hostname)
+
+        if hostname not in rvlist:
             neighbours = subscriptions_list['neighbours']
             for i in neighbours.items():
-                try:
-                    response = requests.post(f'http://{i[0]}:{i[1]}/unsubscribe', data = json.dumps(msg))
-                except requests.exceptions.RequestException as e:
-                    return 'Cannot reach server!'
+                if i[0] not in msg['messages_received_by']:
+                    try:
+                        response = requests.post(f'http://{i[0]}:{i[1]}/unsubscribe', data = json.dumps(msg))
+                    except Exception as e:
+                        return str(e)
         else:
-            username = msg["UserName"]
-            repo = msg["Repo"]
             query = {"username": username}
             doc = db.subscribers_db.find(query)
             if doc.count():
@@ -239,21 +253,28 @@ def view_table():
 def pub_routing():
     msg = dict(json.loads(request.get_data()))
     if msg['message_type'] == 'publish':
+        publisher = msg['publisher']
+        owner = msg['owner']
+        repo = msg['repo']
+        commit_messages = msg['commit_messages']
+
         rvlist = EN(msg)
-        if socket.gethostname() not in rvlist:
+        hostname = socket.gethostname()
+
+        if 'messages_received_by' not in msg:
+                msg['messages_received_by'] = []
+        msg['messages_received_by'].append(hostname)
+
+        if hostname not in rvlist:
             neighbours = subscriptions_list['neighbours']
             for i in neighbours.items():
-                try:
-                    response = requests.post(f'http://{i[0]}:{i[1]}/commits_notifier', data = json.dumps(msg))
-                except requests.exceptions.RequestException as e:
-                    return 'Cannot reach server!'
+                if i[0] not in msg['messages_received_by']:
+                    try:
+                        response = requests.post(f'http://{i[0]}:{i[1]}/commits_notifier', data = json.dumps(msg))
+                    except Exception as e:
+                        return str(e)
             return "Propagated Request!"
         else:
-            publisher = msg['publisher']
-            owner = msg['owner']
-            repo = msg['repo']
-            commit_messages = msg['commit_messages']
-            
             for i in range(0,len(commit_messages)-1):
                 item_doc = {
                     'publisher': publisher,
@@ -318,8 +339,8 @@ def send_notifications():
 
                 try:
                     response = requests.post(f'http://{ip}:5003/notifications', data = json.dumps(notif_json))
-                except requests.exceptions.RequestException as e:
-                    return 'Cannot reach Server'
+                except Exception as e:
+                    return str(e)
                 
                 if len(notif):
                     subscriber_query = {
@@ -354,7 +375,7 @@ def registration_request():
 
     try:
         response = requests.post('http://' + hostname + ':5002/start_server', data=payload)
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         return "Registration for " + publisher_name + " is failed"
 
     return "Registration for " + publisher_name + " is successful"
@@ -362,7 +383,7 @@ def registration_request():
 def refresh_advertisement_send_request(ip: str, topics: dict):
     try:
         response = requests.post('http://' + ip + ':5003/refresh_advertisements', data=json_util.dumps(topics))
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         return False
     # send_notifications()
     return True
