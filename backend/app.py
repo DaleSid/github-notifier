@@ -87,13 +87,14 @@ def deadvertise_form():
 def login_request():
     msg = dict(json.loads(request.get_data()))
     username = msg["UserName"]
+    remote_hostname = msg["HostName"]
     query = {"username": username}
     doc = db.subscribers_db.find(query)
     if doc.count():
         newvalues = {
             "$set": {
                 "online": 1,
-                "current_ip": request.remote_addr
+                "current_ip": remote_hostname
             }
         }
         db.subscribers_db.update_one(query, newvalues)
@@ -102,7 +103,7 @@ def login_request():
             'username': username,
             'online': 1,
             'subscriptions': [],
-            'current_ip': request.remote_addr
+            'current_ip': remote_hostname
         }
         db.subscribers_db.insert_one(item_doc)
     refresh_advertisements()
@@ -114,13 +115,14 @@ def login_request():
 def logout_request():
     msg = dict(json.loads(request.get_data()))
     username = msg["UserName"]
+    remote_hostname = msg["HostName"]
     query = {"username": username}
     doc = db.subscribers_db.find(query)
     if doc.count():
         newvalues = {
             "$set": {
                 "online": 0,
-                "current_ip": request.remote_addr
+                "current_ip": remote_hostname
             }
         }
         db.subscribers_db.update_one(query, newvalues)
@@ -145,6 +147,7 @@ def subscription_request():
         owner = msg["Owner"]
         repo = msg["Repo"]
         publisher = msg["Provider"]
+        remote_hostname = msg["HostName"]
 
         rvlist = SN(msg)
         hostname = socket.gethostname()
@@ -179,7 +182,7 @@ def subscription_request():
                             }
                         },
                         "$set": {
-                            "current_ip": request.remote_addr,
+                            "current_ip": remote_hostname,
                             "online": 1
                         }
                     }
@@ -194,7 +197,7 @@ def subscription_request():
                             'owner': owner,
                             'repo': repo,
                             'last_update': "2000-01-01T00:00:00Z",
-                            'current_ip': request.remote_addr
+                            'current_ip': remote_hostname
                         }
                     ]
                 }
@@ -332,6 +335,13 @@ def send_notifications():
         if cursor['online'] == 1:
             ip = cursor['current_ip']
             username = cursor['username']
+
+            notif_json = {}
+            notif_json['UserName'] = username
+            notif_json['Notifications'] = []
+
+            notification_summary = []
+
             subscriptions_list = pd.DataFrame(list(cursor['subscriptions']))
             for index, row in subscriptions_list.iterrows():
                 cmdb_filtered = cmdb[(cmdb['publisher'] == row['publisher']) & (cmdb['repo_owner'] == row['owner']) & (cmdb['repo'] == row['repo'])]
@@ -340,28 +350,37 @@ def send_notifications():
                     notif = cmdb_filtered.iloc[:idx[0]].reset_index()
                 except IndexError:
                     notif = cmdb_filtered
-                notif_json = {}
-                notif_json['UserName'] = cursor['username']
-                notif_json['Notifications'] = [v for v in notif.to_dict(orient = 'index').values()]
-
-                try:
-                    response = requests.post(f'http://{ip}:5003/notifications', data = json.dumps(notif_json))
-                except Exception as e:
-                    return str(e)
                 
-                if len(notif):
-                    subscriber_query = {
-                        'username': username,
-                        'subscriptions.publisher': row['publisher'],
-                        'subscriptions.owner': row['owner'],
-                        'subscriptions.repo': row['repo'],
+                notifications = [v for v in notif.to_dict(orient = 'index').values()]
+                notif_json['Notifications'] += notifications
+
+                if len(notifications):
+                    notification_summary.append({
+                        "publisher": row['publisher'],
+                        "owner": row['owner'],
+                        "repo": row['repo'],
+                        "last_update": notifications[0]['commit_datetime']
+                    })
+                
+            try:
+                response = requests.post(f'http://{ip}:5003/notifications', data = json.dumps(notif_json))
+            except Exception as e:
+                print("Exception", str(e))
+                return str(e)
+
+            for notif_summary in notification_summary:
+                subscriber_query = {
+                    'username': username,
+                    'subscriptions.publisher': notif_summary['publisher'],
+                    'subscriptions.owner': notif_summary['owner'],
+                    'subscriptions.repo': notif_summary['repo'],
+                }
+                last_commit_time = notif_summary["last_update"]
+                subscriber_doc_updated = {"$set": {
+                    'subscriptions.$.last_update': last_commit_time
                     }
-                    last_commit_time = notif_json['Notifications'][0]['commit_datetime']
-                    subscriber_doc_updated = {"$set": {
-                        'subscriptions.$.last_update': last_commit_time
-                        }
-                    }
-                    db.subscribers_db.update_one(subscriber_query, subscriber_doc_updated)
+                }
+                db.subscribers_db.update_one(subscriber_query, subscriber_doc_updated)
     return True
 
 @app.route('/register', methods=['POST'])
