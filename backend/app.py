@@ -196,7 +196,7 @@ def subscription_request():
 
             update_topics(publisher, owner, repo)
             # send_notifications()
-            return get_return_dict(username=username, message=username + " requested access to " + repo + " repo from " + owner)
+        return get_return_dict(username=username, message=username + " requested access to " + repo + " repo from " + owner)
 
 
 @app.route('/unsubscribe', methods=['POST'])
@@ -226,7 +226,7 @@ def unsubscribe_request():
                 }
                 db.subscribers_db.update_one(query, deleteValue)
             # send_notifications()
-            return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
+        return get_return_dict(username=username, message=username + " unsubscribed for " + repo)
 
 @app.route('/viewtable')
 def view_table():
