@@ -184,8 +184,14 @@ def notifications_post():
             pass
         cache.set("gNewNotifications", len(request_data['Notifications']))
         notifications = cache.get("gNotifications")
+        # print(request_data["Notifications"], "\nDale\n", request_data)
+        latest_commit = request_data['Notifications'][0]['commit_sha']
+        for pre_notification in notifications:
+            if latest_commit == pre_notification['commit_sha']:
+                return "Posted Notifications already!"
         cache.set("gNotifications", request_data['Notifications'] + notifications)
     except Exception as e:
+        # print("Exception", str(e))
         cache.set("gNewNotifications", 0)
         notifications = cache.get("gNotifications")
         cache.set("gNotifications", notifications)
