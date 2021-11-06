@@ -120,8 +120,8 @@ def subscription_form_post():
     payload["Provider"] = request.form['publisher']
 
     try:
-        # brokers = {'backend_broker_1':'5101', 'backend_broker_2':'5101', 'backend_broker_3':'5101'}
-        brokers = {'backend_broker_1':'5101'}
+        brokers = {'backend_broker_1':'5101', 'backend_broker_2':'5101', 'backend_broker_3':'5101'}
+        # brokers = {'backend_broker_1':'5101'}
         broker_add = random.choice(list(brokers.keys()))
         response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/subscribe', data=json.dumps(payload))
     except Exception as e:
@@ -145,8 +145,8 @@ def unsubscribe_form_post():
     payload["Repo"] = request.form['repo']
 
     try:
-        # brokers = {'backend_broker_1':'5101', 'backend_broker_2':'5101', 'backend_broker_3':'5101'}
-        brokers = {'backend_broker_1':'5101'}
+        brokers = {'backend_broker_1':'5101', 'backend_broker_2':'5101', 'backend_broker_3':'5101'}
+        # brokers = {'backend_broker_1':'5101'}
         broker_add = random.choice(list(brokers.keys()))
         response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/unsubscribe', data=json.dumps(payload))
     except Exception as e:

@@ -247,6 +247,7 @@ def pub_routing():
                     response = requests.post(f'http://{i[0]}:{i[1]}/commits_notifier', data = json.dumps(msg))
                 except requests.exceptions.RequestException as e:
                     return 'Cannot reach server!'
+            return "Propagated Request!"
         else:
             publisher = msg['publisher']
             owner = msg['owner']
@@ -276,6 +277,8 @@ def pub_routing():
                     }
                     db.topics_db.update_one(topic_doc, topic_doc_updated)
             send_notifications()
+            return "Sent Notification!"
+    return "Not a publish request!"
 
 def send_notifications():
     subscribers_db = db.subscribers_db
