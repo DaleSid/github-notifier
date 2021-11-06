@@ -43,7 +43,8 @@ def api_pull_to_db():
                 # db_push_json = json.dumps(db_push_dict)
 
                 try:
-                    brokers = {'backend_broker1_1':'5101', 'backend_broker2_1':'5102', 'backend_broker3_1':'5103'}
+                    # brokers = {'backend_broker_1':'5101', 'backend_broker_2':'5101', 'backend_broker_3':'5101'}
+                    brokers = {'backend_broker_1':'5101'}
                     broker_add = random.choice(list(brokers.keys()))
                     response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/commits_notifier', data = json.dumps(db_push_dict))
                 except requests.exceptions.RequestException as e:

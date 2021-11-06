@@ -7,6 +7,7 @@ import sys
 from bson import json_util
 import pandas as pd
 import numpy as np
+import socket
 
 app = Flask(__name__)
 
@@ -19,26 +20,26 @@ db = client["subscribers_db"]
 topics = client["topics_db"]
 
 subscriptions_list = {}
-subscriptions_list['neighbours'] = {'backend_broker2_1':'5102', 'backend_broker3_1':'5103'}
+subscriptions_list['neighbours'] = {'backend_broker_1': '5101' ,'backend_broker_2':'5101', 'backend_broker_3':'5101'}
 subscriptions_list['subscriptions'] = []
 
 def EN(msg):
     repo = msg['repo']
     if (((repo[0]>='a') & (repo[0]<='h')) | ((repo[0]>='A') & (repo[0]<='H'))):
-        return ['5101']
+        return ['backend_broker_1']
     if (((repo[0]>='i') & (repo[0]<='q')) | ((repo[0]>='I') & (repo[0]<='Q'))):
-        return ['5102']
+        return ['backend_broker_2']
     if (((repo[0]>='r') & (repo[0]<='z')) | ((repo[0]>='R') & (repo[0]<='Z'))):
-        return ['5103']
+        return ['backend_broker_3']
 
 def SN(msg):
     repo = msg['Repo']
     if (((repo[0]>='a') & (repo[0]<='h')) | ((repo[0]>='A') & (repo[0]<='H'))):
-        return ['5101']
+        return ['backend_broker_1']
     if (((repo[0]>='i') & (repo[0]<='q')) | ((repo[0]>='I') & (repo[0]<='Q'))):
-        return ['5102']
+        return ['backend_broker_2']
     if (((repo[0]>='r') & (repo[0]<='z')) | ((repo[0]>='R') & (repo[0]<='Z'))):
-        return ['5103']
+        return ['backend_broker_3']
 
 def get_return_dict(username: str, message: str = ""):
     query = {"username": username}
@@ -141,8 +142,8 @@ def subscription_request():
     msg = dict(json.loads(request.get_data()))
     if msg['message_type'] == 'subscribe':
         rvlist = SN(msg)
-        # return str(type(rvlist))
-        if '5101' not in rvlist:
+        # return str("Dale" + socket.gethostname())
+        if socket.gethostname() not in rvlist:
             neighbours = subscriptions_list['neighbours']
             # return str(neighbours)
             for i in neighbours.items():
@@ -203,7 +204,7 @@ def unsubscribe_request():
     msg = dict(json.loads(request.get_data()))
     if(msg['message_type'] == 'unsubscribe'):
         rvlist = SN(msg)
-        if '5102' not in rvlist:
+        if socket.gethostname() not in rvlist:
             neighbours = subscriptions_list['neighbours']
             for i in neighbours.items():
                 try:
@@ -239,7 +240,7 @@ def pub_routing():
     msg = dict(json.loads(request.get_data()))
     if msg['message_type'] == 'publish':
         rvlist = EN(msg)
-        if '5101' not in rvlist:
+        if socket.gethostname() not in rvlist:
             neighbours = subscriptions_list['neighbours']
             for i in neighbours.items():
                 try:
@@ -274,7 +275,7 @@ def pub_routing():
                         }
                     }
                     db.topics_db.update_one(topic_doc, topic_doc_updated)
-            # send_notifications()
+            send_notifications()
 
 def send_notifications():
     subscribers_db = db.subscribers_db

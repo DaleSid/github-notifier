@@ -26,7 +26,7 @@ def logout():
     payload = dict()
     payload["UserName"] = cache.get("gUser_name")
     try:
-        response = requests.post('http://backend_broker1_1:5101/logout', data=json.dumps(payload))
+        response = requests.post('http://backend_broker_1:5101/logout', data=json.dumps(payload))
     except Exception as e:
         cache.set("gLatest_message", "Logout Failed! Login again!")
         return 'Error'
@@ -95,10 +95,11 @@ def login_form_post():
     payload["UserName"] = request.form['username']
 
     try:
-        response = requests.post('http://backend_broker1_1:5101/login', data=json.dumps(payload))
+        response = requests.post('http://backend_broker_1:5101/login', data=json.dumps(payload))
     except Exception as e:
         cache.set("gLatest_message", "Login Failed! Try again!")
         return redirect(url_for('login_form'))
+    # return response.text
     response_json = dict(json.loads(response.text))
     cache.set("gLatest_message", response_json['Message'])
     cache.set("gSubscriptions", response_json['Subscriptions'])
@@ -108,6 +109,9 @@ def login_form_post():
 
 @app.route('/subscriptions', methods=['POST'])
 def subscription_form_post():
+    if not cache.get("gUser_name"):
+        cache.set("gLatest_message", "Session Expired! Try again!")
+        return redirect(url_for('login_form'))
     payload = dict()
     payload["message_type"] = 'subscribe'
     payload["UserName"] = cache.get("gUser_name")
@@ -116,14 +120,14 @@ def subscription_form_post():
     payload["Provider"] = request.form['publisher']
 
     try:
-        # brokers = {'backend_broker1_1':'5101', 'backend_broker2_1':'5102', 'backend_broker3_1':'5103'}
-        brokers = {'backend_broker1_1':'5101'}
+        # brokers = {'backend_broker_1':'5101', 'backend_broker_2':'5101', 'backend_broker_3':'5101'}
+        brokers = {'backend_broker_1':'5101'}
         broker_add = random.choice(list(brokers.keys()))
         response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/subscribe', data=json.dumps(payload))
     except Exception as e:
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('subscribe_form'))
-    return response.text
+    # return response.text
     response_json = dict(json.loads(response.text))
     cache.set("gLatest_message", response_json['Message'])
     cache.set("gSubscriptions", response_json['Subscriptions'])
@@ -132,14 +136,17 @@ def subscription_form_post():
 
 @app.route('/unsubscribe', methods=['POST'])
 def unsubscribe_form_post():
+    if not cache.get("gUser_name"):
+        cache.set("gLatest_message", "Session Expired! Try again!")
+        return redirect(url_for('login_form'))
     payload = dict()
     payload["message_type"] = 'unsubscribe'
     payload["UserName"] = cache.get("gUser_name")
     payload["Repo"] = request.form['repo']
 
     try:
-        brokers = {'backend_broker1_1':'5101', 'backend_broker2_1':'5102', 'backend_broker3_1':'5103'}
-        # brokers = {'backend_broker1_1':'5101'}
+        # brokers = {'backend_broker_1':'5101', 'backend_broker_2':'5101', 'backend_broker_3':'5101'}
+        brokers = {'backend_broker_1':'5101'}
         broker_add = random.choice(list(brokers.keys()))
         response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/unsubscribe', data=json.dumps(payload))
     except Exception as e:

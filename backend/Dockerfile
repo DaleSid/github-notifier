@@ -5,3 +5,5 @@ COPY . /backend
 WORKDIR /backend 
 
 RUN pip install -r requirements.txt
+
+CMD ["python", "-u", "app.py"]

@@ -1,32 +1,5 @@
 version: '3.8'
 services:
-  broker1:
-    build: .
-    command: python -u app.py
-    ports: 
-      - "5101:5101"
-    volumes:
-      - .:/backend
-    links:
-      - db
-  # broker2:
-  #   build: .
-  #   command: python -u broker2.py
-  #   ports: 
-  #     - "5102:5102"
-  #   volumes:
-  #     - .:/backend
-  #   links:
-  #     - db
-  # broker3:
-  #   build: .
-  #   command: python -u broker3.py
-  #   ports: 
-  #     - "5103:5103"
-  #   volumes:
-  #     - .:/backend
-  #   links:
-  #     - db
   db:
     image: mongo:latest
     hostname: backend_db
