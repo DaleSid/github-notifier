@@ -3,6 +3,7 @@ from flask_caching import Cache
 import requests
 import json
 import random
+import socket
 
 config = {
     "DEBUG": True,  # some Flask specific configs
@@ -21,10 +22,12 @@ cache.add("gNotifications", [])
 cache.add("gNewNotifications", 0)
 cache.add("gPublishers", [])
 cache.add("gAdvertisements", [])
+hostname = socket.gethostname()
 
 def logout():
     payload = dict()
     payload["UserName"] = cache.get("gUser_name")
+    payload["HostName"] = hostname
     try:
         response = requests.post('http://backend_broker_1:5101/logout', data=json.dumps(payload))
     except Exception as e:
@@ -97,6 +100,7 @@ def login_form_post():
     payload = dict()
     cache.set("gUser_name", request.form['username'])
     payload["UserName"] = request.form['username']
+    payload["HostName"] = hostname
 
     try:
         response = requests.post('http://backend_broker_1:5101/login', data=json.dumps(payload))
@@ -124,6 +128,7 @@ def subscription_form_post():
     payload = dict()
     payload["message_type"] = 'subscribe'
     payload["UserName"] = cache.get("gUser_name")
+    payload["HostName"] = hostname
     payload["Owner"] = request.form['owner']
     payload["Repo"] = request.form['repo']
     payload["Provider"] = request.form['publisher']
