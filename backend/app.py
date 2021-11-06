@@ -276,6 +276,10 @@ def pub_routing():
             return "Propagated Request!"
         else:
             for i in range(0,len(commit_messages)-1):
+                query = {'commit_sha': commit_messages[i]['sha']}
+                doc = db.commit_messages_db.find(query)
+                if doc.count() !=0:
+                    break
                 item_doc = {
                     'publisher': publisher,
                     'repo_owner': owner,
