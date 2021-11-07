@@ -36,21 +36,35 @@ Please find below the steps to be followed to obtain a successful implementation
 
 5) In another terminal, navigate to the backend folder and run the following command
 - `docker-compose up`
-- This will create separate containers for the middleware (flask server) and the backend (MongoDB) and initiate them. Both these containers are placed in a docker network
-  
-6) In another terminal, run the following command to add the front end container and the api_call container to the above docker network so that all three containers are in the same network
+- This will create separate container for database (MongoDB) and initiate it. This container will be placed under a docker network.
+
+6) In another terminal, navigate to the backend folder and run the following command
+- `docker build -t backend-image .`
+- `docker run --name backend_broker_1 -h backend_broker_1 -p 5101:5101 backend-image`
+- `docker run --name backend_broker_2 -h backend_broker_2 -p 5102:5101 backend-image`
+- `docker run --name backend_broker_3 -h backend_broker_3 -p 5103:5101 backend-image`
+- This will create three separate flask containers which forms the rendezvous broker network and initiate them. 
+
+7) In another terminal, run the following command to add the front end container and the api_call container to the above docker network so that all three containers are in the same network
 - `docker network connect backend_default frontend-container`
 - Do the same for all the subscriber containers to connect them to the docker network
+
+8) Connect all the broker containers to the docker network
+- `docker network connect backend_default backend_broker_1`
+- `docker network connect backend_default backend_broker_2`
+- `docker network connect backend_default backend_broker_3`
+
+9) Connect the API Data provider to the same docker network
 - `docker network connect backend_default apicall-container`
   
-6) To verify if all three containers are in the same network run,
+10) To verify if all three containers are in the same network run,
 - `docker network inspect backend_default`
 
-7) Open a browser and go to 
+11) Open a browser and go to 
 - `localhost:5002`
 - This will start the data fetcher container and update the appropriate GitHub events to the DB
   
-1) Open a browser and go to 
-- `localhost:5000`
+12) Open a browser and go to 
+- `localhost:5003`
 - Provide apporpriate inputs. These inputs will be added to the MongoDB once the submit button is clicked
 - This is extensible to all the containers created with the frontend-image
