@@ -167,4 +167,4 @@ def refresh_advertisements_post():
     return "Advertisements have been posted successfully!"
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5003, debug=True)

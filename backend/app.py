@@ -215,6 +215,7 @@ def commit_notif_push():
             }
             db.topics_db.update_one(topic_doc, topic_doc_updated)
     send_notifications()
+    return True
 
 def send_notifications():
     subscribers_db = db.subscribers_db
@@ -253,7 +254,7 @@ def send_notifications():
                 notif_json['Notifications'] = [v for v in notif.to_dict(orient = 'index').values()]
 
                 try:
-                    response = requests.post(f'http://{ip}:5000/notifications', data = json.dumps(notif_json))
+                    response = requests.post(f'http://{ip}:5003/notifications', data = json.dumps(notif_json))
                 except requests.exceptions.RequestException as e:
                     return 'Cannot reach Server'
                 
@@ -297,7 +298,7 @@ def registration_request():
 
 def refresh_advertisement_send_request(ip: str, topics: dict):
     try:
-        response = requests.post('http://' + ip + ':5000/refresh_advertisements', data=json_util.dumps(topics))
+        response = requests.post('http://' + ip + ':5003/refresh_advertisements', data=json_util.dumps(topics))
     except requests.exceptions.RequestException as e:
         return False
     # send_notifications()
