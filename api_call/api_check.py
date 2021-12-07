@@ -39,7 +39,16 @@ def api_pull_to_db():
                     return 'API Limit exceeded!'
 
                 for message in commit_messages:
-                    producer.send(topic_name, message)
+                    new_message: dict = {}
+                    new_message['publisher'] = publisher
+                    new_message['repo_owner'] = owner
+                    new_message['repo'] = repo
+                    new_message['commit_sha'] = message['sha']
+                    new_message['commit_datetime'] = message['commit']['author']['date']
+                    new_message['commit_author'] = message['commit']['author']['name']
+                    new_message['commit_message'] = message['commit']['message']
+                    print(json.dumps(new_message, indent=4, sort_keys=True))
+                    producer.send(topic_name, new_message)
                     time.sleep(2)
         time.sleep(60)
     return 'This is done!'
