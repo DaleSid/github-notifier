@@ -2,8 +2,32 @@
     "topics": [
         {
             "publisher": "GitHub",
-            "owner": "github",
-            "repo": "docs",
+            "owner": "Mozilla",
+            "repo": "DeepSpeech",
+            "last_update": "2000-01-01T00:00:00Z"
+        },
+        {
+            "publisher": "GitHub",
+            "owner": "Microsoft",
+            "repo": "Muzic",
+            "last_update": "2000-01-01T00:00:00Z"
+        },
+        {
+            "publisher": "GitHub",
+            "owner": "Shriram96",
+            "repo": "pdp",
+            "last_update": "2000-01-01T00:00:00Z"
+        },
+        {
+            "publisher": "GitHub",
+            "owner": "DaleSid",
+            "repo": "ideal-palm-tree",
+            "last_update": "2000-01-01T00:00:00Z"
+        },
+        {
+            "publisher": "GitHub",
+            "owner": "DaleSid",
+            "repo": "effective-parakeet",
             "last_update": "2000-01-01T00:00:00Z"
         }
     ]
