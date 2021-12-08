@@ -17,19 +17,24 @@ def json_serializer(data):
 def api_pull_to_db():
     producer = KafkaProducer(bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], value_serializer=json_serializer)
 
-    topics_file = open('topics.json')
-    topics_data = json.load(topics_file)
-
     timeout = time.time() + 1200
 
     while(time.time() <= timeout):
-        for topic in topics_data['topics']:
+        topics_data: dict = {}
+        with open('topics.json') as topics_file:
+            topics_data = json.load(topics_file)
+
+        topic_commits: dict = {}
+        for index, topic in enumerate(topics_data['topics']):
             publisher = topic['publisher']
             if(publisher == 'GitHub'):
                 owner = topic['owner']
                 repo = topic['repo']
-                topic_name = publisher + "." + owner + "." + repo
                 last_update = topic['last_update']
+
+                topic_name = publisher + "_" + owner + "_" + repo
+                topic_commits[topic_name] = []
+
                 query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
                 
                 r = requests.get(query_url, headers={'Authorization': 'Bearer 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'})
@@ -47,9 +52,24 @@ def api_pull_to_db():
                     new_message['commit_datetime'] = message['commit']['author']['date']
                     new_message['commit_author'] = message['commit']['author']['name']
                     new_message['commit_message'] = message['commit']['message']
-                    print(json.dumps(new_message, indent=4, sort_keys=True))
-                    producer.send(topic_name, new_message)
-                    time.sleep(2)
+
+                    topic_commits[topic_name].append(new_message)
+
+                last_update = topic_commits[topic_name][0]['commit_datetime']
+                topics_data['topics'][index]['last_update'] = last_update
+
+
+        print("Topic Commits: \n", json.dumps(topic_commits, indent=4, sort_keys=True))
+
+        for topic_name in topic_commits.keys():
+            for commit_message in topic_commits[topic_name]:
+                producer.send(topic_name, commit_message)
+        
+        print("Dumping Data to file", topics_data)
+        with open('topics.json', 'w') as topics_file:
+            json.dump(topics_data, topics_file, indent=4, sort_keys=True)
+        
+
         time.sleep(60)
     return 'This is done!'
 
