@@ -28,7 +28,7 @@ def api_pull_to_db():
             if(publisher == 'GitHub'):
                 owner = topic['owner']
                 repo = topic['repo']
-                topic_name = publisher + "_" + owner + "_" + repo
+                topic_name = publisher + "." + owner + "." + repo
                 last_update = topic['last_update']
                 query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
                 
