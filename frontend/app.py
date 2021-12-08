@@ -4,7 +4,7 @@ import requests
 import json
 import random
 import socket
-from kafka import KafkaConsumer, TopicPartition
+from kafka import KafkaConsumer, TopicPartition, consumer
 
 config = {
     "DEBUG": True,  # some Flask specific configs
@@ -27,7 +27,10 @@ cache.add("gPublishers", [])
 cache.add("gAdvertisements", [])
 hostname = socket.gethostname()
 
+consumer1 = None
+
 def logout():
+    global consumer1
     payload = dict()
     payload["UserName"] = cache.get("gUser_name")
     payload["HostName"] = hostname
@@ -41,6 +44,8 @@ def logout():
     # return response.text
     try:
         # response_json = json.loads(response.text)
+        consumer1.close()
+        consumer1 = None
         message = cache.get("gUser_name") + ' logged out successfully!'
         cache.set("gLatest_message", message)
         cache.set("gUser_name","")
@@ -63,16 +68,17 @@ def login_form(message_text=""):
 
 @app.route('/subscriptions')
 def subscribe_form(message_text=""):
+    global consumer1
     if cache.get("gUser_name") == "":
         cache.set("gLatest_message", "Please login first")
         return redirect(url_for('login_form'))
     publishers = cache.get("gPublishers")
-    consumer1 = KafkaConsumer(
-        bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
-        group_id = cache.get("gUser_name"),
-        enable_auto_commit='true')
+    # consumer1 = KafkaConsumer(
+    #     bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
+    #     group_id = cache.get("gUser_name"),
+    #     enable_auto_commit='true')
     topics = consumer1.topics()
-    consumer1.close()
+    # consumer1.close()
     if not topics:
         topics = []
     return render_template('subscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"),
@@ -95,29 +101,46 @@ def unsubscribe_form(message_text=""):
 
 @app.route('/notifications')
 def notification_table(message_text=""):
+    global consumer1
+    print("Notifications enter")
     if cache.get("gUser_name") == "":
         cache.set("gLatest_message", "Please login first")
         return redirect(url_for('login_form'))
     
     new_notif = 0
     new_notifications_dict = {}
-    for topic in subscriptions_list:
-        consumer1 = KafkaConsumer(
-            bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
-            group_id = cache.get("gUser_name"),
-            enable_auto_commit='true')
-        tp = TopicPartition(topic,0)
-        consumer1.assign([tp])
-        consumer1.seek_to_end(tp)
-        lastOffset = consumer1.position(tp)
-        consumer1.seek_to_beginning(tp)
-        for message in consumer1:
-            new_notifications_dict[new_notif] = message.value.decode('utf8')
-            new_notif = new_notif+1
-            if message.offset == lastOffset - 1:
-                break
-        consumer1.close()
-    
+    # for topic in subscriptions_list:
+    print("Part 1")
+    # tp = TopicPartition(topic,0)
+    # consumer1.assign([tp])
+    # consumer1.seek_to_end(tp)
+    # lastOffset = consumer1.position(tp)
+    consumer1.commit()
+    consumer1.subscribe(subscriptions_list)
+    print("Subscribed", consumer1.subscription())
+    # consumer1.seek_to_beginning(tp)
+    notifications = cache.get("gNotifications")
+    count = 0
+    for message in consumer1:
+        count += 1
+        consumer1.commit()
+        print("Inside Loop", json.loads(message.value))
+        notif_message = json.loads(message.value)
+        if notif_message not in notifications:
+            notifications.append(notif_message)
+        # new_notifications_dict[new_notif] = json.loads(message.value)
+        # new_notif = new_notif+1
+        # if message.offset == lastOffset - 1:
+        if count == 1:
+            break
+    print("Done with loop")
+    # consumer1.close()
+    # return notifications
+    cache.set("gNotifications", notifications)
+    # return new_notifications_dict
+    return render_template('notifications.html', user_name=cache.get("gUser_name"),
+                           message=cache.get("gLatest_message"), notifications=notifications,
+                           new_notifications=cache.get("gNewNotifications"), advertisements=cache.get("gAdvertisements"))
     try:
         # request_data = dict(json.loads(request.get_data()))
         if not cache.get("gUser_name"):
@@ -149,6 +172,7 @@ def notification_table(message_text=""):
 
 @app.route('/', methods=['POST'])
 def login_form_post():
+    global consumer1
     payload = dict()
     cache.set("gUser_name", request.form['username'])
     payload["UserName"] = request.form['username']
@@ -162,6 +186,10 @@ def login_form_post():
     # return response.text
     try:
         # response_json = dict(json.loads(response.text))
+        consumer1 = KafkaConsumer(
+            bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
+            group_id = cache.get("gUser_name"),
+            enable_auto_commit='true')
         message = request.form['username'] + ' logged in successfully!'
         cache.set("gLatest_message", message)
         cache.set("gSubscriptions", subscriptions_list)
@@ -176,6 +204,7 @@ def login_form_post():
 
 @app.route('/subscriptions', methods=['POST'])
 def subscription_form_post():
+    global consumer1
     if not cache.get("gUser_name"):
         cache.set("gLatest_message", "Session Expired! Try again!")
         return redirect(url_for('login_form'))
@@ -194,12 +223,13 @@ def subscription_form_post():
         # response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/subscribe', data=json.dumps(payload))
         topic_name = request.form['publisher']
         subscriptions_list.append(topic_name)
-        consumer1 = KafkaConsumer(
-            bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
-            group_id = cache.get("gUser_name"),
-            enable_auto_commit='true')
+        # consumer1 = KafkaConsumer(
+        #     bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
+        #     group_id = cache.get("gUser_name"),
+        #     enable_auto_commit='true')
+        consumer1.commit()
         consumer1.subscribe(topics = subscriptions_list)
-        consumer1.close()
+        # consumer1.close()
     except Exception as e:
         cache.set("gLatest_message", "Cannot reach Server")
         return redirect(url_for('subscribe_form'))
@@ -217,6 +247,7 @@ def subscription_form_post():
 
 @app.route('/unsubscribe', methods=['POST'])
 def unsubscribe_form_post():
+    global consumer1
     if not cache.get("gUser_name"):
         cache.set("gLatest_message", "Session Expired! Try again!")
         return redirect(url_for('login_form'))
@@ -232,14 +263,15 @@ def unsubscribe_form_post():
         # response = requests.post(f'http://{broker_add}:{brokers[broker_add]}/unsubscribe', data=json.dumps(payload))
         topic_name = request.form['repo']
         subscriptions_list.remove(topic_name)
-        consumer1 = KafkaConsumer(
-            bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
-            group_id = cache.get("gUser_name"),
-            enable_auto_commit='true')
+        # consumer1 = KafkaConsumer(
+        #     bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
+        #     group_id = cache.get("gUser_name"),
+        #     enable_auto_commit='true')
+        consumer1.commit()
         consumer1.subscribe(topics = subscriptions_list)
-        consumer1.close()
+        # consumer1.close()
     except Exception as e:
-        cache.set("gLatest_message", "Cannot reach Server")
+        cache.set("gLatest_message", str(e))
         return redirect(url_for('unsubscribe_form'))
     # return response.text
     try:
