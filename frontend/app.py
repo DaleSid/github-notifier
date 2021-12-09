@@ -101,13 +101,15 @@ def notification_table(message_text=""):
 
     msg_pack = consumer1.poll(timeout_ms=20000)
     for tp, messages in msg_pack.items():
-        new_notif += 1
         print("Message Bundle: ", new_notif, ")", messages)
         for message in messages:
-            notif_message = json.loads(message.value)
-            print("Inside Loop", notif_message)
-            if notif_message not in notifications:
-                notifications.append(notif_message)
+            commits_message = json.loads(message.value)
+            # {"Commits": []}
+            print("Inside Loop", commits_message["Commits"])
+            for notif_message in commits_message["Commits"]:
+                if notif_message not in notifications:
+                    new_notif += 1
+                    notifications.append(notif_message)
 
     consumer1.commit()
     print("Done with loop")

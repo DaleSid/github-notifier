@@ -62,8 +62,11 @@ def api_pull_to_db():
         print("Topic Commits: \n", json.dumps(topic_commits, indent=4, sort_keys=True))
 
         for topic_name in topic_commits.keys():
+            producer.send(topic_name, {"Commits": topic_commits[topic_name]})
+            continue
             for commit_message in topic_commits[topic_name]:
                 producer.send(topic_name, commit_message)
+                time.sleep(1)
         
         print("Dumping Data to file", topics_data)
         with open('topics.json', 'w') as topics_file:
