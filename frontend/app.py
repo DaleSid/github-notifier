@@ -99,19 +99,31 @@ def notification_table(message_text=""):
     print("Subscribed", consumer1.subscription())
     notifications = cache.get("gNotifications")
 
+    # consumer1 = KafkaConsumer(
+    #         bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
+    #         group_id = cache.get("gUser_name"),
+    #         # enable_auto_commit='true',
+    #         auto_offset_reset='earliest')
+    # consumer1.subscribe(topics = cache.get("gSubscriptions"))
+    # for msg in consumer1:
+    #     return str(json.loads(msg.value))
     msg_pack = consumer1.poll(timeout_ms=20000)
+    # return str(msg_pack)
+    # consumer1.commit()
+
     for tp, messages in msg_pack.items():
         print("Message Bundle: ", new_notif, ")", messages)
+        # return str(len(messages))
         for message in messages:
-            commits_message = json.loads(message.value)
-            # {"Commits": []}
-            print("Inside Loop", commits_message["Commits"])
-            for notif_message in commits_message["Commits"]:
-                if notif_message not in notifications:
-                    new_notif += 1
-                    notifications.append(notif_message)
+            # return str(message.value)
+            notif_message = json.loads(message.value)
+            # return notif_message
+            print("Inside Loop", notif_message)
+            if notif_message not in notifications:
+                new_notif += 1
+                notifications.append(notif_message)
 
-    consumer1.commit()
+    # consumer1.commit()
     print("Done with loop")
     cache.set("gNewNotifications", new_notif)
     cache.set("gNotifications", notifications)
@@ -132,7 +144,8 @@ def login_form_post():
         consumer1 = KafkaConsumer(
             bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
             group_id = cache.get("gUser_name"),
-            enable_auto_commit='true')
+            # enable_auto_commit='true',
+            auto_offset_reset='earliest')
         if consumer1 == None:
             cache.set("gLatest_message", "Consumer creation failure for" + cache.get("gUser_name"))
             return redirect(url_for('login_form'))
@@ -156,7 +169,7 @@ def subscription_form_post():
         topic_name = request.form['publisher']
         subscriptions_list = cache.get("gSubscriptions")
         subscriptions_list.append(topic_name)
-        consumer1.commit()
+        # consumer1.commit()
         consumer1.subscribe(topics = subscriptions_list)
     except Exception as e:
         cache.set("gLatest_message", "Cannot reach Kafka Cluster")
@@ -178,7 +191,7 @@ def unsubscribe_form_post():
         topic_name = request.form['repo']
         subscriptions_list = cache.get("gSubscriptions")
         subscriptions_list.remove(topic_name)
-        consumer1.commit()
+        # consumer1.commit()
         consumer1.subscribe(topics = subscriptions_list)
     except Exception as e:
         cache.set("gLatest_message", str(e))
