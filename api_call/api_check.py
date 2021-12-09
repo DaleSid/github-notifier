@@ -2,7 +2,7 @@ import requests
 import os
 import json
 import pymongo
-from flask import Flask
+from flask import Flask, request, render_template, redirect, url_for
 from kafka import KafkaProducer
 import time
 import random
@@ -10,27 +10,46 @@ import json
 
 app = Flask(__name__)
 
-def create_topics_json():
-    topics_json = {}
-    topics_json['topics'] = []
-    for i,j in [['Mozilla','DeepSpeech'],['Microsoft','Muzic'],['Shriram96','pdp'],['DaleSid','ideal-palm-tree'],['DaleSid','effective-parakeet']]:
-        repo_dict = {}
-        repo_dict['last_update'] = "2000-01-01T00:00:00Z"
-        repo_dict['owner'] = i
-        repo_dict['publisher'] = "GitHub"
-        repo_dict['repo'] = j
-        topics_json['topics'].append(repo_dict)
+def reset_topics_json():
+    with open('topics.json') as topics_file:
+        topics_data = json.load(topics_file)
+    for index, _ in enumerate(topics_data['topics']):
+        topics_data['topics'][index]['last_update'] = "2000-01-01T00:00:00Z"
     with open('topics.json', 'w') as topics_file:
-        json.dump(topics_json, topics_file, indent=4, sort_keys=True)
+        json.dump(topics_data, topics_file, indent=4, sort_keys=True)
 
 def json_serializer(data):
     return json.dumps(data).encode("utf-8")
+
+@app.route('/addtopics')
+def add_topics_form():
+    return render_template('addtopics.html', publishers=['GitHub', 'BitBucket', 'GitLab'])
+
+@app.route('/addtopics', methods=['POST'])
+def add_topics():
+    payload = dict()
+    payload["owner"] = request.form['owner']
+    payload["repo"] = request.form['repo']
+    payload["publisher"] = request.form['publisher']
+    payload["last_update"] = "2000-01-01T00:00:00Z"
+
+    with open('topics.json') as topics_file:
+        topics_data = json.load(topics_file)
+    topics_data['topics'].append(payload)
+    with open('topics.json', 'w') as topics_file:
+        json.dump(topics_data, topics_file, indent=4, sort_keys=True)
+    
+    return redirect(url_for('add_topics_form'))
+
+@app.route('/refresh')
+def refresh_topics_json():
+    reset_topics_json()
+    return "topics.json refreshed"
 
 @app.route('/')
 def api_pull_to_db():
     producer = KafkaProducer(bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], value_serializer=json_serializer)
 
-    create_topics_json()
     timeout = time.time() + 1200
 
     while(time.time() <= timeout):
@@ -80,10 +99,7 @@ def api_pull_to_db():
         for topic_name in topic_commits.keys():
             producer.send(topic_name, {"Commits": topic_commits[topic_name]})
             continue
-            for commit_message in topic_commits[topic_name]:
-                producer.send(topic_name, commit_message)
-                time.sleep(1)
-        
+
         print("Dumping Data to file", topics_data)
         with open('topics.json', 'w') as topics_file:
             json.dump(topics_data, topics_file, indent=4, sort_keys=True)
