@@ -65,18 +65,7 @@ def subscribe_form(message_text=""):
     
     try:
         subscriptions_list = cache.get("gSubscriptions")
-        current_topics = cache.get("gCurrentTopics")
         topics = consumer1.topics()
-        advertise_topics_list = list(set(topics) - set(current_topics))
-        show_ad_topics: list = []
-        for advertised_topic in advertise_topics_list:
-            add_topic: dict = {}
-            temp_topic_str = advertised_topic.split("_")
-            add_topic['publisher'] = temp_topic_str[0]
-            add_topic['owner'] = temp_topic_str[1]
-            add_topic['repo'] = temp_topic_str[2]
-            show_ad_topics.append(add_topic)
-        cache.set("gAdvertisements", show_ad_topics)
         cache.set("gCurrentTopics", topics)
     except Exception as e:
         cache.set("gLatest_message", str(e))
@@ -91,30 +80,11 @@ def subscribe_form(message_text=""):
 
 @app.route('/unsubscribe')
 def unsubscribe_form(message_text=""):
-    global consumer1
     if cache.get("gUser_name") == "":
         cache.set("gLatest_message", "Please login first")
         return redirect(url_for('login_form'))
 
     subscriptions = cache.get("gSubscriptions")
-
-    try:
-        current_topics = cache.get("gCurrentTopics")
-        topics = consumer1.topics()
-        advertise_topics_list = list(set(topics) - set(current_topics))
-        show_ad_topics: list = []
-        for advertised_topic in advertise_topics_list:
-            add_topic: dict = {}
-            temp_topic_str = advertised_topic.split("_")
-            add_topic['publisher'] = temp_topic_str[0]
-            add_topic['owner'] = temp_topic_str[1]
-            add_topic['repo'] = temp_topic_str[2]
-            show_ad_topics.append(add_topic)
-        cache.set("gAdvertisements", show_ad_topics)
-        cache.set("gCurrentTopics", topics)
-    except Exception as e:
-        cache.set("gLatest_message", str(e))
-        return redirect(url_for('login_form'))
 
     return render_template('unsubscribe.html', user_name=cache.get("gUser_name"), message=cache.get("gLatest_message"),
                            subscriptions=subscriptions, new_notifications=cache.get("gNewNotifications"))
@@ -152,6 +122,19 @@ def notification_table(message_text=""):
                     new_notif += 1
                     notifications.append(notif_message)
                     print("Appended to list")
+    
+    current_topics = cache.get("gCurrentTopics")
+    topics = consumer1.topics()
+    advertise_topics_list = list(set(topics) - set(current_topics))
+    show_ad_topics: list = []
+    for advertised_topic in advertise_topics_list:
+        add_topic: dict = {}
+        temp_topic_str = advertised_topic.split("_")
+        add_topic['publisher'] = temp_topic_str[0]
+        add_topic['owner'] = temp_topic_str[1]
+        add_topic['repo'] = temp_topic_str[2]
+        show_ad_topics.append(add_topic)
+    cache.set("gAdvertisements", show_ad_topics)
 
     # consumer1.commit()
     print("Done with loop")
