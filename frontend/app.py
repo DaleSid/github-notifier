@@ -109,6 +109,7 @@ def notification_table(message_text=""):
     for tp, messages in msg_pack.items():
     # for messages in consumer1:
         print("Message Bundle: ", new_notif, ")", messages)
+        # return str(len(messages))
         for message in messages:
             commits_message = json.loads(message.value)
             # {"Commits": []}
@@ -165,7 +166,7 @@ def subscription_form_post():
         topic_name = request.form['publisher']
         subscriptions_list = cache.get("gSubscriptions")
         subscriptions_list.append(topic_name)
-        consumer1.commit()
+        # consumer1.commit()
         consumer1.subscribe(topics = subscriptions_list)
     except Exception as e:
         cache.set("gLatest_message", "Cannot reach Kafka Cluster")
