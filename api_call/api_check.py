@@ -10,6 +10,19 @@ import json
 
 app = Flask(__name__)
 
+def create_topics_json():
+    topics_json = {}
+    topics_json['topics'] = []
+    for i,j in [['Mozilla','DeepSpeech'],['Microsoft','Muzic'],['Shriram96','pdp'],['DaleSid','ideal-palm-tree'],['DaleSid','effective-parakeet']]:
+        repo_dict = {}
+        repo_dict['last_update'] = "2000-01-01T00:00:00Z"
+        repo_dict['owner'] = i
+        repo_dict['publisher'] = "GitHub"
+        repo_dict['repo'] = j
+        topics_json['topics'].append(repo_dict)
+    with open('topics.json', 'w') as topics_file:
+        json.dump(topics_json, topics_file, indent=4, sort_keys=True)
+
 def json_serializer(data):
     return json.dumps(data).encode("utf-8")
 
@@ -17,6 +30,7 @@ def json_serializer(data):
 def api_pull_to_db():
     producer = KafkaProducer(bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], value_serializer=json_serializer)
 
+    create_topics_json()
     timeout = time.time() + 1200
 
     while(time.time() <= timeout):
@@ -52,7 +66,7 @@ def api_pull_to_db():
                     new_message['commit_datetime'] = message['commit']['author']['date']
                     new_message['commit_author'] = message['commit']['author']['name']
                     new_message['commit_message'] = message['commit']['message']
-
+                    
                     topic_commits[topic_name].append(new_message)
 
                 last_update = topic_commits[topic_name][0]['commit_datetime']

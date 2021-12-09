@@ -129,7 +129,7 @@
         <label for="repo">Choose a Repo:</label>
         <select id="repo" name="repo" size="6">
             {% for subscription in subscriptions %}
-                <option value={{ subscription }}>{{ subscription }}</option>
+                <option value="{{ subscription }}">{{ subscription }}</option>
             {% endfor %}
         </select><br>
         <input type="submit" value="Unsubscribe">

@@ -89,7 +89,12 @@ def unsubscribe_form(message_text=""):
 
 @app.route('/notifications')
 def notification_table(message_text=""):
-    global consumer1
+    # global consumer1
+    consumer2 = KafkaConsumer(
+            bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
+            group_id = cache.get("gUser_name"),
+            enable_auto_commit=False,
+            auto_offset_reset = 'earliest')
     print("Notifications enter")
     if cache.get("gUser_name") == "":
         cache.set("gLatest_message", "Please login first")
@@ -99,8 +104,10 @@ def notification_table(message_text=""):
     print("Subscribed", consumer1.subscription())
     notifications = cache.get("gNotifications")
 
-    msg_pack = consumer1.poll(timeout_ms=20000)
+    consumer2.subscribe(topics = cache.get("gSubscriptions"))
+    msg_pack = consumer2.poll(timeout_ms=5000, update_offsets=False)
     for tp, messages in msg_pack.items():
+    # for messages in consumer1:
         print("Message Bundle: ", new_notif, ")", messages)
         for message in messages:
             commits_message = json.loads(message.value)
@@ -110,13 +117,15 @@ def notification_table(message_text=""):
                 if notif_message not in notifications:
                     new_notif += 1
                     notifications.append(notif_message)
+                    print("Appended to list")
 
-    consumer1.commit()
+    # consumer1.commit()
     print("Done with loop")
+    consumer2.close()
     cache.set("gNewNotifications", new_notif)
     cache.set("gNotifications", notifications)
     return render_template('notifications.html', user_name=cache.get("gUser_name"),
-                           message=cache.get("gLatest_message"), notifications=notifications,
+                           message=cache.get("gLatest_message"), notifications=reversed(notifications),
                            new_notifications=cache.get("gNewNotifications"))
 
 
@@ -132,7 +141,7 @@ def login_form_post():
         consumer1 = KafkaConsumer(
             bootstrap_servers=['kafka-1:9092', 'kafka-2:9092', 'kafka-3:9092'], 
             group_id = cache.get("gUser_name"),
-            enable_auto_commit='true')
+            enable_auto_commit=False)
         if consumer1 == None:
             cache.set("gLatest_message", "Consumer creation failure for" + cache.get("gUser_name"))
             return redirect(url_for('login_form'))
@@ -175,11 +184,14 @@ def unsubscribe_form_post():
         return redirect(url_for('login_form'))
 
     try:
-        topic_name = request.form['repo']
+        topic_name = request.form["repo"]
         subscriptions_list = cache.get("gSubscriptions")
         subscriptions_list.remove(topic_name)
         consumer1.commit()
-        consumer1.subscribe(topics = subscriptions_list)
+        if len(subscriptions_list) == 0:
+            consumer1.unsubscribe()
+        else:
+            consumer1.subscribe(topics = subscriptions_list)
     except Exception as e:
         cache.set("gLatest_message", str(e))
         return redirect(url_for('unsubscribe_form'))
