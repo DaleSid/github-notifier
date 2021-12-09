@@ -129,6 +129,13 @@
 
 <h2>Git Daily Notifications: Notifications</h2>
 <h4>Latest Message: {{ message }}</h4>
+<marquee behavior="scroll" direction="left" scrollamount="12">
+    {% for advertisement in advertisements %}
+    <b>Publisher:</b> {{ advertisement.publisher }}
+    <b>Owner:</b> {{ advertisement.owner }}
+    <b>Repo:</b> {{ advertisement.repo }} <b>IS OUT NOW! Go and Subscribe! </b><br>
+    {% endfor %}
+</marquee>
 <div class="navbar">
     <a href="{{ url_for('login_form') }}"><i class="fa fa-fw fa-user"></i> {{ user_name }}</a>
     <a href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 

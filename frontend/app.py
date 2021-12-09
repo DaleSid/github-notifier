@@ -23,6 +23,8 @@ cache.add("gUser_name", "")
 cache.add("gSubscriptions", [])
 cache.add("gNotifications", [])
 cache.add("gNewNotifications", 0)
+cache.add("gAdvertisements", [])
+cache.add("gCurrentTopics", [])
 
 hostname = socket.gethostname()
 
@@ -63,7 +65,11 @@ def subscribe_form(message_text=""):
     
     try:
         subscriptions_list = cache.get("gSubscriptions")
+        current_topics = cache.get("gCurrentTopics")
         topics = consumer1.topics()
+        advertise_topics = list(set(topics) - set(current_topics))
+        cache.set("gAdvertisements", advertise_topics)
+        cache.set("gCurrentTopics", topics)
     except Exception as e:
         cache.set("gLatest_message", str(e))
         return redirect(url_for('login_form'))
@@ -127,7 +133,7 @@ def notification_table(message_text=""):
     cache.set("gNotifications", notifications)
     return render_template('notifications.html', user_name=cache.get("gUser_name"),
                            message=cache.get("gLatest_message"), notifications=reversed(notifications),
-                           new_notifications=cache.get("gNewNotifications"))
+                           new_notifications=cache.get("gNewNotifications"), advertisements=cache.get("gAdvertisements"))
 
 
 @app.route('/', methods=['POST'])
