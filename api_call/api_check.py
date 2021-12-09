@@ -47,7 +47,6 @@ def api_pull_to_db():
                 last_update = topic['last_update']
 
                 topic_name = publisher + "_" + owner + "_" + repo
-                topic_commits[topic_name] = []
 
                 query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
                 
@@ -57,6 +56,7 @@ def api_pull_to_db():
                 if 'documentation_url' in commit_messages:
                     return 'API Limit exceeded!'
 
+                current_topic_commits: list = []
                 for message in commit_messages:
                     new_message: dict = {}
                     new_message['publisher'] = publisher
@@ -66,11 +66,13 @@ def api_pull_to_db():
                     new_message['commit_datetime'] = message['commit']['author']['date']
                     new_message['commit_author'] = message['commit']['author']['name']
                     new_message['commit_message'] = message['commit']['message']
-                    
-                    topic_commits[topic_name].append(new_message)
 
-                last_update = topic_commits[topic_name][0]['commit_datetime']
-                topics_data['topics'][index]['last_update'] = last_update
+                    current_topic_commits.append(new_message)
+
+                if len(current_topic_commits) > 1:
+                    topic_commits[topic_name] = current_topic_commits
+                    last_update = topic_commits[topic_name][0]['commit_datetime']
+                    topics_data['topics'][index]['last_update'] = last_update
 
 
         print("Topic Commits: \n", json.dumps(topic_commits, indent=4, sort_keys=True))
