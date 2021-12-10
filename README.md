@@ -1,10 +1,10 @@
-## CSE-586-Project1 - Pub/Sub Implementation
+## CSE-586-Project2 - Pub/Sub Implementation with Kafka
 
 ```
 Team number : 78
 Topic : Github Daily Notification System
 Members : Siddharth Sankaran(50421657), Shriram Ravi (50419944)
-Phase II - Centralized Pub/Sub
+Project : 2 - Pub/Sub Implementation with Kafka
 ```
 
 # **Repo link**:
@@ -15,56 +15,42 @@ The purpose of this document is to provide the reader with an understanding of t
 # **Scope**: 
 The pub/sub system that will be built will act as a daily GitHub Daily notification system. Users can subscribe to any open repository on Github and will receive a daily update of all the commits in that repo.
 
-# **Phase 2**: 
-We have implemented the an extensive frontend webpage and a fullfledged middleware. The frontend  flask webpage takes input - Username, Owner of repo, name of repository. This is sent to the middle ware flask server which pushes the information onto a MongoDB database. Then the API calls fetches the data from the publishers regarding the subscribed topic. These are collated by the middleware/Broker and notified to the subscribers accordingly.The project is implemented with three containers, one for the frontend and one for API Calls and one for the middleware and MongoDB
+# **Project 2**: 
+We have implemented an extensive frontend webpage and a fullfledged middleware that runs is basically a set of Kafka brokers. The frontend  flask webpage takes input - Username, Owner of repo, name of repository. These inputs are collectively considered as a topic. The topics to which a consumer has subscribed is polled seeking messages from Kafka message broker cluster. Then the API calls fetches the data from the data providers regarding the subscribed topic. These are then sent over(Produced) to the Kafka message broker clusters according to their topics. Kafka does all the other parts in the background like collating the messages, maintaining the partitions(Message queue like structures), data replication and data delivery. 
 
-Please find below the steps to be followed to obtain a successful implementation of Phase 2 of the project
+Please find below the steps to be followed to obtain a successful implementation of Project 2
 
-1) In Terminal, navigate to frontend folder and run to create the frontend docker image
-- `docker build -t frontend-image .` 
-  
-2) Use the image to create the front end container
-- `docker run --name frontend-container -p 5003:5003 frontend-image`
-- You can create multiple instances of front end containers (Subscribers). These needs to be exposed to different local ports.
-  
-3) This will run the frontend container on port 5003 in localhost
+1) In Terminal, navigate to the kafka folder and run the following command
+- `docker-compose up -d`
+- This will create separate container for Zookeeper, Kafka message broker cluster and initiate it. This container will be placed under a docker network.
 
-4) In another terminal, navigate to the api_call folder and run the following command
+2) In another terminal, navigate to the api_call folder and run the following command
 - `docker build -t apicall-image .`
 - `docker run --name apicall-container -p 5002:5002 apicall-image`
 - This will create a container designed for fetching publishers data from the GitHub
 
-5) In another terminal, navigate to the backend folder and run the following command
-- `docker-compose up`
-- This will create separate container for database (MongoDB) and initiate it. This container will be placed under a docker network.
+3) Connect the API Data provider to the same docker network
+- `docker network connect kafka_default apicall-container`
 
-6) In another terminal, navigate to the backend folder and run the following command
-- `docker build -t backend-image .`
-- `docker run --name backend_broker_1 -h backend_broker_1 -p 5101:5101 backend-image`
-- `docker run --name backend_broker_2 -h backend_broker_2 -p 5102:5101 backend-image`
-- `docker run --name backend_broker_3 -h backend_broker_3 -p 5103:5101 backend-image`
-- This will create three separate flask containers which forms the rendezvous broker network and initiate them. 
-
-7) In another terminal, run the following command to add the front end container and the api_call container to the above docker network so that all three containers are in the same network
-- `docker network connect backend_default frontend-container`
-- Do the same for all the subscriber containers to connect them to the docker network
-
-8) Connect all the broker containers to the docker network
-- `docker network connect backend_default backend_broker_1`
-- `docker network connect backend_default backend_broker_2`
-- `docker network connect backend_default backend_broker_3`
-
-9) Connect the API Data provider to the same docker network
-- `docker network connect backend_default apicall-container`
+4) In another Terminal, navigate to frontend folder and run to create the frontend docker image
+- `docker build -t frontend-image .` 
   
-10) To verify if all three containers are in the same network run,
-- `docker network inspect backend_default`
+5) Use the image to create the front end container
+- `docker-compose up -d`
+- This creates ten instances of the front-end image. You can extend this and create multiple instances of front end containers (Subscribers). These needs to be exposed to different local ports. Get the list of ports in which the front end containers are running so that we could access it later. We consider 6003 as one of the ports.
+  
+6) To verify if all three containers are in the same network run,
+- `docker network inspect kafka_default`
 
-11) Open a browser and go to 
+7) Open a browser and go to 
 - `localhost:5002`
-- This will start the data fetcher container and update the appropriate GitHub events to the DB
+- This will start the data fetcher container and publish/produce the appropriate GitHub events to the Kafka cluster
+- You can add topics to the system by going to `localhost:5002/addtopics` and provide appropriate inputs.
   
-12) Open a browser and go to 
+8) Open a browser and go to 
 - `localhost:5003`
-- Provide apporpriate inputs. These inputs will be added to the MongoDB once the submit button is clicked
+- Provide apporpriate inputs. These inputs will be considered as a topic and polled for messages from Kafka cluster.
 - This is extensible to all the containers created with the frontend-image
+
+9) If you don't want any hassle running all the above commands, just `cd` to the project directory and run
+- `./run-all.sh`
