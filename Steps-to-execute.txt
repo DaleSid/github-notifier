@@ -1,0 +1,31 @@
+1. Open Terminal from the project folder
+2. Run 
+    1. ./run-all.sh
+3. Show docker app with all running instances of frontend, Kafka and api_call containers
+4. Go to localhost:5002/addtopic
+5. Add the following topic
+    1. Owner name: zeldaret 
+    2. Repo name: oot
+6. Start localhost:5002 (Topics and messages start publishing)
+7. Open any consumer. Lets open
+    1. localhost:6001
+    2. localhost:6002
+8. Subscribe to any topic on both
+9. Show the notifications
+10. Add a commit to any repo subscribed
+11. Wait for atmost a minute to fetch the commit and show the notification
+12. Unsubscribe a topic
+13. Wait for atmost a minute, the notification will not be shown
+14. Add another topic in localhost:5002/addtopic
+    1. Owner name: grpc 
+    2. Repo name: grpc
+15. Show the topic being advertised in notifications
+16. Open the console of any Kafka broker in the cluster
+17. Run the commands to show the following
+    1. Replication/Partitions
+        1. ./bin/kafka-topics.sh --zookeeper  zookeeper:2181 --describe --topic GitHub_Microsoft_Muzic
+    2. Broker Network nodes
+        1. ./bin/zookeeper-shell.sh zookeeper:2181 ls /brokers/ids
+    3. Topics list
+        1. ./bin/kafka-topics.sh --zookeeper  zookeeper:2181 --list
+18. Logout
