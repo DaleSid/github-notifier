@@ -1,0 +1,84 @@
+version: '3.8'
+services:
+  frontend-image-1:
+    image: frontend-image
+    container_name: frontend-image-1
+    ports:
+      - '6001:5003'
+
+  frontend-image-2:
+    image: frontend-image
+    container_name: frontend-image-2
+    ports:
+      - '6002:5003'
+    depends_on:
+      - frontend-image-1
+
+  frontend-image-3:
+    image: frontend-image
+    container_name: frontend-image-3
+    ports:
+      - '6003:5003'
+    depends_on:
+      - frontend-image-2
+
+  frontend-image-4:
+    image: frontend-image
+    container_name: frontend-image-4
+    ports:
+      - '6004:5003'
+    depends_on:
+      - frontend-image-3
+
+  frontend-image-5:
+    image: frontend-image
+    container_name: frontend-image-5
+    ports:
+      - '6005:5003'
+    depends_on:
+      - frontend-image-4
+
+  frontend-image-6:
+    image: frontend-image
+    container_name: frontend-image-6
+    ports:
+      - '6006:5003'
+    depends_on:
+      - frontend-image-5
+
+  frontend-image-7:
+    image: frontend-image
+    container_name: frontend-image-7
+    ports:
+      - '6007:5003'
+    depends_on:
+      - frontend-image-6
+
+  frontend-image-8:
+    image: frontend-image
+    container_name: frontend-image-8
+    ports:
+      - '6008:5003'
+    depends_on:
+      - frontend-image-7
+
+  frontend-image-9:
+    image: frontend-image
+    container_name: frontend-image-9
+    ports:
+      - '6009:5003'
+    depends_on:
+      - frontend-image-8
+
+  frontend-image-10:
+    image: frontend-image
+    container_name: frontend-image-10
+    ports:
+      - '6010:5003'
+    depends_on:
+      - frontend-image-9
+
+networks:
+  default:
+    external: true
+    name: kafka_default
