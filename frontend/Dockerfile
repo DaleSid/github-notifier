@@ -1,8 +1,8 @@
 FROM python:3.8
 
-ADD . /app
+COPY . /frontend
 
-WORKDIR /app
+WORKDIR /frontend
 
 RUN pip install -r requirements.txt
 

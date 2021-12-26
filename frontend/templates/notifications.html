@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script>
+    function timedRefresh(timeoutPeriod) {
+       setTimeout("location.reload(true);",timeoutPeriod);
+    }
+    
+    window.onload = timedRefresh(15000);
+</script>
+<style>
+    input[type=text], select {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    
+    input[type=submit] {
+        width: 100%;
+        background-color: #4CAF50;
+        color: white;
+        padding: 14px 20px;
+        margin: 8px 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    input[type=submit]:hover {
+        background-color: #45a049;
+    }
+    
+    div {
+        border-radius: 5px;
+        background-color: #f2f2f2;
+        padding: 20px;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .navbar {
+    width: 100%;
+    background-color: #555;
+    overflow: auto;
+    }
+
+    .navbar a {
+    float: left;
+    padding: 12px;
+    color: white;
+    text-decoration: none;
+    font-size: 17px;
+    }
+
+    .navbar a:hover {
+    background-color: #000;
+    }
+
+    .active {
+    background-color: #04AA6D;
+    }
+
+    @media screen and (max-width: 500px) {
+        .navbar a {
+            float: none;
+            display: block;
+        }
+    }
+
+    #notifications {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    #notifications td, #customers th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    #notifications tr:nth-child(even){
+        background-color: #f2f2f2;
+    }
+
+    #notifications tr:hover {
+        background-color: #ddd;
+    }
+
+    #notifications th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04AA6D;
+        color: white;
+    }
+
+    .notification {
+        background-color: #555;
+        color: white;
+        text-decoration: none;
+        padding: 15px 26px;
+        position: relative;
+        display: inline-block;
+        border-radius: 2px;
+    }
+
+    .notification:hover {
+        background: red;
+    }
+
+    .notification .badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        padding: 5px 10px;
+        border-radius: 50%;
+        background-color: red;
+        color: white;
+    }
+</style>
+<body>
+
+<h2>Git Daily Notifications: Notifications</h2>
+<h4>Latest Message: {{ message }}</h4>
+<marquee behavior="scroll" direction="left" scrollamount="12">
+    {% for advertisement in advertisements %}
+    <b>Publisher:</b> {{ advertisement.publisher }}
+    <b>Owner:</b> {{ advertisement.owner }}
+    <b>Repo:</b> {{ advertisement.repo }} <b>IS OUT NOW! Go and Subscribe! </b><br>
+    {% endfor %}
+</marquee>
+<div class="navbar">
+    <a href="{{ url_for('login_form') }}"><i class="fa fa-fw fa-user"></i> {{ user_name }}</a>
+    <a href="{{ url_for('subscribe_form') }}"><i class="fa fa-fw fa-search-plus"></i> Subscribe</a> 
+    <a href="{{ url_for('unsubscribe_form') }}"><i class="fa fa-fw fa-search-minus"></i> Unsubscribe</a> 
+    <a class="active notification" href="{{ url_for('notification_table') }}"><i class="fa fa-fw fa-bell"></i> Notifications
+        <span class="badge">{{ new_notifications }}</span>
+    </a>
+</div>
+<div>
+    <table id="notifications">
+        <tr>
+          <th>Publisher</th>
+          <th>Owner</th>
+          <th>Repo</th>
+          <th>Commit ID</th>
+          <th>Time</th>
+          <th>Committer</th>
+          <th>Message</th>
+        </tr>
+        {% for notification in notifications %}
+        {% if loop.index0 < new_notifications%}
+            <tr>
+            <td class="notification">{{ notification.publisher }}<span class="badge">{{ loop.index0 + 1 }}</span></td>
+            <td>{{ notification.repo_owner }}</td>
+            <td>{{ notification.repo }}</td>
+            <td>{{ notification.commit_sha }}</td>
+            <td>{{ notification.commit_datetime }}</td>
+            <td>{{ notification.commit_author }}</td>
+            <td>{{ notification.commit_message }}</td>
+            </tr>
+        {% else %}
+            <tr>
+            <td>{{ notification.publisher }}</td>
+            <td>{{ notification.repo_owner }}</td>
+            <td>{{ notification.repo }}</td>
+            <td>{{ notification.commit_sha }}</td>
+            <td>{{ notification.commit_datetime }}</td>
+            <td>{{ notification.commit_author }}</td>
+            <td>{{ notification.commit_message }}</td>
+            </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+</div>
+</body>
+</html>
