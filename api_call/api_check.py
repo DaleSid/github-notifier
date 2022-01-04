@@ -30,7 +30,7 @@ def api_pull_to_db():
                 last_update = document['last_update']
                 query_url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={last_update}"
                 
-                r = requests.get(query_url, headers={'Authorization': 'Bearer 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'})
+                r = requests.get(query_url, headers={'Authorization': 'Bearer `insert github access token`'})
                 commit_messages = r.json()
 
                 if 'documentation_url' in commit_messages:
